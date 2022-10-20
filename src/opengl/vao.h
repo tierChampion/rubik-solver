@@ -6,11 +6,14 @@
 #include <vector>
 #include <string>
 
+/**
+* Vertex array object. Stores mesh data.
+*/
 class Vao {
 
-	GLuint id;
-	GLuint attribCount;
-	GLuint vertCount;
+	GLuint _id;
+	GLuint _attribCount;
+	GLuint _vertCount;
 
 public:
 	Vao(const char* objFile);

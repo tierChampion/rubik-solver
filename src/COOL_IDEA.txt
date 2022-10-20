@@ -7,8 +7,8 @@ COMMENTS DONE:
 - helpers
 - image
 - glsl
+- opengl
 
 TODO:
 - app
-- opengl
 - cube

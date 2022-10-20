@@ -1,31 +1,45 @@
 #include "vao.h"
 
+/**
+* Stores the mesh data of a file in a Vao.
+* @param objFile - mesh file to read
+*/
 Vao::Vao(const char* objFile) {
-	vertCount = 0;
-	glGenVertexArrays(1, &id);
-	glBindVertexArray(id);
+	_vertCount = 0;
+	glGenVertexArrays(1, &_id);
+	glBindVertexArray(_id);
 	loadObj(objFile);
 	glBindVertexArray(0);
 }
 
+/**
+* Bind the Vao for rendering.
+*/
 void Vao::bind() {
-	glBindVertexArray(id);
-	for (int a = 0; a < attribCount; a++) {
+	glBindVertexArray(_id);
+	for (int a = 0; a < _attribCount; a++) {
 		glEnableVertexAttribArray(a);
 	}
 }
 
+/**
+* Unbind the Vao after rendering.
+*/
 void Vao::unbind() {
-	for (int a = 0; a < attribCount; a++) {
+	for (int a = 0; a < _attribCount; a++) {
 		glDisableVertexAttribArray(a);
 	}
 	glBindVertexArray(0);
 }
 
 int Vao::getTriCount() {
-	return vertCount;
+	return _vertCount;
 }
 
+/**
+* Read the data from a mesh file.
+* @param path - path of the file
+*/
 bool Vao::loadObj(const char* path) {
 
 	std::vector<unsigned int> vertIndices, uvIndices, normalIndices;
@@ -43,26 +57,29 @@ bool Vao::loadObj(const char* path) {
 	while (1) {
 
 		char lineHeader[128];
-		// PROBLEM HERE
 		int res = fscanf_s(file, "%s", lineHeader, sizeof(lineHeader));
 		if (res == EOF)
 			break; // Reached the end of the file
 
+		// Vertex position
 		if (strcmp(lineHeader, "v") == 0) {
 			glm::vec3 vertex;
 			fscanf_s(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
 			tempVerts.push_back(vertex);
 		}
+		// Vertex texture coordinates
 		else if (strcmp(lineHeader, "vt") == 0) {
 			glm::vec2 uv;
 			fscanf_s(file, "%f %f\n", &uv.x, &uv.y);
 			tempUV.push_back(uv);
 		}
+		// Vertex normal coordinates
 		else if (strcmp(lineHeader, "vn") == 0) {
 			glm::vec3 normal;
 			fscanf_s(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
 			tempNormals.push_back(normal);
 		}
+		// indices
 		else if (strcmp(lineHeader, "f") == 0) {
 
 			std::string vert1, vert2, vert3;
@@ -72,7 +89,7 @@ bool Vao::loadObj(const char* path) {
 				&vertexIndex[1], &uvIndex[1], &normalIndex[1],
 				&vertexIndex[2], &uvIndex[2], &normalIndex[2]);
 			if (matches != 9) {
-				printf("Problem while reading the file! ");
+				printf("Problem while reading the file! \n");
 				return false;
 			}
 
@@ -97,12 +114,11 @@ bool Vao::loadObj(const char* path) {
 		finalUVs.push_back(tempUV[uvIndices[i] - 1]);
 		finalNormals.push_back(tempNormals[normalIndices[i] - 1]);
 
-		vertCount++;
+		_vertCount++;
 	}
 
 	/*
-	Creation of the buffers and the attributes
-	** check if it actually works.
+	Storage of the data for OpenGL
 	*/
 
 	GLuint vertexBuffer;
@@ -132,7 +148,7 @@ bool Vao::loadObj(const char* path) {
 	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-	attribCount = 3;
+	_attribCount = 3;
 
 	return true;
 }

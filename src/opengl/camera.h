@@ -4,10 +4,13 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+/**
+* Camera from where the world is rendered
+*/
 class Camera {
 
-	glm::mat4 viewMatrix;
-	glm::mat4 projectionMatrix;
+	glm::mat4 _viewMatrix;
+	glm::mat4 _projectionMatrix;
 
 public:
 	Camera();
@@ -20,8 +23,11 @@ public:
 	glm::mat4 getVP();
 };
 
+/**
+* Getter for the view-projection matrix.
+*/
 inline glm::mat4 Camera::getVP()
 {
-	return projectionMatrix * viewMatrix;
+	return _projectionMatrix * _viewMatrix;
 }
 
