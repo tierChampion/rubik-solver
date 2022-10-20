@@ -1,0 +1,14 @@
+Have any mesh be the whole cube.
+
+Slice the mesh in order to make 26 different Vao's.
+
+COMMENTS DONE:
+- glfw
+- helpers
+- image
+- glsl
+
+TODO:
+- app
+- opengl
+- cube
