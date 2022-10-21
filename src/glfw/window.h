@@ -14,7 +14,7 @@ class Window {
 
 public:
 
-	Window(int width, int height, const char*& title, bool fullScreen);
+	Window(int width, int height, float aspect_ratio, const char*& title, bool fullScreen);
 	~Window();
 	void makeCurrentContext();
 	void setSwapInterval(int interval);
@@ -24,5 +24,5 @@ public:
 	GLFWwindow* getWindow();
 
 private:
-	int init(bool fullScreen);
+	int init(float aspect_ratio, bool fullScreen);
 };

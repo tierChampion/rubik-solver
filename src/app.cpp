@@ -26,10 +26,10 @@
 
 Window* window;
 
-const static unsigned int W_WIDTH = 1080;
+const static unsigned int W_WIDTH = 1280;
 const static unsigned int W_HEIGHT = 720;
 const static char* W_TITLE = "Rubik's cube solver";
-const static bool FULL_SCREEN = false;
+static bool FULL_SCREEN = false;
 
 static bool MIRROR = false;
 const static glm::vec3 CAMERA_POS(0, 0, 30);
@@ -55,12 +55,13 @@ bool initGL() {
 
 bool initGLFW() {
 	if (!glfwInit()) exit(EXIT_FAILURE);
+	// Set GLFW constants
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	/* Make the first NULL glfwGetPrimaryMonitor() to make the window full screen. */
-	window = new Window(W_WIDTH, W_HEIGHT, W_TITLE, FULL_SCREEN);
+	// Create GLFW context and window
+	window = new Window(W_WIDTH, W_HEIGHT, ASPECT_RATIO, W_TITLE, FULL_SCREEN);
 	window->makeCurrentContext();
 	window->setSwapInterval(1);
 	return true;
@@ -68,9 +69,35 @@ bool initGLFW() {
 
 int main(int argc, char** argv) {
 
+	std::cout << "$$$$$$$\\             $$\\       $$\\ $$\\             $$$$$$\\            $$\\	\n"
+		<< "$$  __$$\\            $$ |      \\__|$$ |           $$  __$$\\           $$ |	\n"
+		<< "$$ |  $$ | $$\\   $$\\ $$$$$$$\\  $$\\ $$ |  $$\\      $$ /  \\__| $$$$$$\   $$ |$$\\    $$\\  $$$$$$\\    $$$$$$\\	\n"
+		<< "$$$$$$$  | $$ |  $$ |$$  __$$\\ $$ |$$ | $$  |     \\$$$$$$\\  $$  __$$\\ $$ |\\$$\\  $$  |$$  __$$\\  $$  __$$\\	\n"
+		<< "$$  __$$ < $$ |  $$ |$$ |  $$ |$$ |$$$$$$  /       \\____$$\\ $$ /  $$ |$$ | \\$$\\$$  / $$$$$$$$ | $$ |  \\__|	\n"
+		<< "$$ |  $$ | $$ |  $$ |$$ |  $$ |$$ |$$  _$$<       $$\\   $$ |$$ |  $$ |$$ |  \\$$$  /  $$   ____| $$ |	\n"
+		<< "$$ |  $$ | \\$$$$$$  |$$$$$$$  |$$ |$$ | \\$$\\      \\$$$$$$  |\\$$$$$$  |$$ |   \\$  /   \\$$$$$$$\\  $$ |	\n"
+		<< "\\__|  \\__|  \\______/ \\_______/ \\__|\\__|  \\__|      \\______/  \\______/ \\__|    \\_/     \\_______| \\__|	\n"
+		<< std::endl;
+
 	if (argc > 1) {
-		if (std::string_view(argv[1]) == "--mirror") {
-			MIRROR = true;
+
+		for (int i = 1; i < argc; i++) {
+
+			std::string_view arg = std::string_view(argv[i]);
+
+			if (arg == "--mirror" || arg == "-m") {
+				MIRROR = true;
+			}
+			else if (arg == "--fullscreen" || arg == "-fs") {
+				FULL_SCREEN = true;
+			}
+			else if (arg == "/?") {
+
+				printf("[--mirror | -m] [-fullscreen | -fs]\n");
+				printf("--mirror | -m			Use a mirror cube instead of rubiks cube\n");
+				printf("--fullscreen | -fs		Display in full screen\n");
+				exit(0);
+			}
 		}
 	}
 
@@ -139,6 +166,15 @@ int main(int argc, char** argv) {
 	/* Callbacks for controls. */
 	glfwSetKeyCallback(window->getWindow(), Keyboard::turningCube_KeyCallback);
 	glfwSetMouseButtonCallback(window->getWindow(), Mouse::mousebuttonCallback);
+
+	printf("\n=== Controls ===\n");
+	printf("<Face turns>\n");
+	printf("	Q(Red), W(Blue), E(Yellow)\n");
+	printf("	A(Orange), S(Green), D(White)\n");
+	printf("	Shift(Counter clockwise), Space(Double turn)\n");
+	printf("<Others>\n");
+	printf("	Enter(Solve the cube)\n");
+	printf("	Backspace(Scramble the cube)\n");
 
 	SDK_CHECK_ERROR_GL();
 

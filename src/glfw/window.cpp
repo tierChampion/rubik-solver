@@ -8,10 +8,10 @@
 * @param title - title of the window created
 * @param fullScreen - whether the window should be in fullscreen mode
 */
-Window::Window(int width, int height, const char*& title, bool fullScreen) :
+Window::Window(int width, int height, float aspect_ratio, const char*& title, bool fullScreen) :
 	_width(width), _height(height), _title(title)
 {
-	if (init(fullScreen) != 0) {
+	if (init(aspect_ratio, fullScreen) != 0) {
 		std::cerr << "Problem while initialising GLFW window." << std::endl;
 	}
 }
@@ -72,13 +72,17 @@ void Window::printGLFWInfo() {
 /**
 * Initialise the GLFW window with the proper parameters.
 */
-int Window::init(bool fullScreen) {
+int Window::init(float aspect_ratio, bool fullScreen) {
 
 	if (!fullScreen) {
 		_window = glfwCreateWindow(_width, _height, _title, NULL, NULL);
 	}
 	else {
-		_window = glfwCreateWindow(_width, _height, _title, glfwGetPrimaryMonitor(), NULL);
+		GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+		glfwGetMonitorWorkarea(monitor, NULL, NULL, NULL, &_height);
+		_width = aspect_ratio * _height;
+		_window = glfwCreateWindow(_width, _height, _title, monitor, NULL);
+		printf("%d %d\n", _width, _height);
 	}
 
 	if (_window == nullptr) {
