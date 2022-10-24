@@ -34,8 +34,6 @@ namespace rubik {
 		return move + 2 - 2 * (move % NUM_MOVES_PER_FACE);
 	}
 
-	rubikState applyMove(int move, rubikState state);
-	rubikState id(rubikState state, int phase);
 	vector<Move> getSolution(CubeState problem);
 	queue<Move> optimizeSolution(vector<Move> solution);
 

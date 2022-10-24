@@ -25,18 +25,18 @@ namespace rubik {
 	const float MIRROR_SCALE = 0.55f;
 
 	/**
-	Implementation of the graphic interface of a single cubie.
-	Has the three parts of the model matrix <translation, rotation and scale> as well as
-	the normals of the face the cubie is a part of.
-	There are 26 (27 minus the center cubie, which is useless) cubies for one rubiks cube.
+	* Implementation of the graphic interface of a single cubie.
+	* Has the three parts of the model matrix <translation, rotation and scale> as well as
+	* the normals of the face the cubie is a part of.
+	* There are 26 (27 minus the center cubie, which is useless) cubies for one rubiks cube.
 	*/
 	class CubieModel {
 
-		glm::vec3 pos;
-		glm::mat4 scaleMat;
-		glm::mat4 translateMat;
-		glm::quat quaternion;
-		std::vector<glm::vec3> faceNormals;
+		glm::vec3 _pos;
+		glm::mat4 _scaleMat;
+		glm::mat4 _translateMat;
+		glm::quat _quaternion;
+		std::vector<glm::vec3> _faceNormals;
 
 	public:
 		CubieModel(int x, int y, int z, float scaleFactor);
@@ -50,17 +50,17 @@ namespace rubik {
 	};
 
 	/**
-	Implementation of the graphic interface of the whole rubik's cube.
-	Contains all it's cubies as well as parameters to manage rotation animations and its own rotation.
+	* Implementation of the graphic interface of the whole rubik's cube.
+	* Contains all it's cubies as well as parameters to manage rotation animations and its own rotation.
 	*/
 	class CubeModel {
 
-		glm::quat quaternion;
-		std::queue<Move> moves;
-		std::queue<std::vector<int>> targets;
-		int steps;
-		int currentStep;
-		std::vector<CubieModel> cubies;
+		glm::quat _quaternion;
+		std::queue<Move> _moves;
+		std::queue<std::vector<int>> _targets;
+		int _steps;
+		int _currentStep;
+		std::vector<CubieModel> _cubies;
 
 	public:
 		CubeModel(bool mirror);

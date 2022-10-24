@@ -2,36 +2,52 @@
 
 namespace rubik {
 
-	Cube::Cube(bool mirror) : model(CubeModel(mirror)), state() {
+	Cube::Cube(bool mirror) : _model(CubeModel(mirror)), _state() {}
 
-	}
-
+	/**
+	* Update the orientation of the cube.
+	*/
 	void Cube::update() {
-		model.update();
+		_model.update();
 	}
 
+	/**
+	* Render the model with the proper shader program.
+	* @param vao - model to use
+	* @param programId - id of the program to use
+	*/
 	void Cube::render(Vao vao, int programId) {
 
-		model.render(vao, programId);
-
+		_model.render(vao, programId);
 	}
 
+	/**
+	* Execute a move on the cube.
+	* @param move - the move to execute
+	*/
 	void Cube::turnFace(Move move) {
 
-		model.turnFace(move);
-		state = state.applyMove(move.type, state.getState());
+		_model.turnFace(move);
+		_state = _state.applyMove(move._type);
 
 	}
 
+	/**
+	* Turn the whole cube by a given amount in each directions.
+	* @param delta - angle variation in the x and y axis
+	*/
 	void Cube::turnCube(glm::vec2 delta) {
 
-		model.turnCube(delta);
+		_model.turnCube(delta);
 
 	}
 
+	/**
+	* Find the solution of the current position and execute it.
+	*/
 	void Cube::solve() {
 
-		queue<Move> solution = optimizeSolution(getSolution(state));
+		queue<Move> solution = optimizeSolution(getSolution(_state));
 
 		printf("Solution of %d moves found! \n", solution.size());
 
@@ -43,6 +59,9 @@ namespace rubik {
 
 	}
 
+	/**
+	* Execute a random sequence of moves to scrabble the cube.
+	*/
 	void Cube::mix() {
 
 		/* Mix between 10 and 30 moves. */
@@ -54,5 +73,4 @@ namespace rubik {
 			turnFace(randomMove);
 		}
 	}
-
 }

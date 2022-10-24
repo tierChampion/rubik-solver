@@ -8,7 +8,6 @@ namespace rubik {
 
 
 	/**********************************************************************
-	 *
 	 * A cube 'state' is a vector<int> with 40 entries, the first 20
 	 * are a permutation of {0,...,19} and describe which cubie is at
 	 * a certain position (regarding the input ordering). The first
@@ -21,13 +20,12 @@ namespace rubik {
 	 * are 0 or 1 for edges and 0, 1 or 2 for corners.
 	 *
 	 **********************************************************************/
-	typedef std::vector<int> rubikState;
 
-	/*
-	Binary numbers to query the possible moves:
-		- If there is a 1, the move is legal for the given phase
-		- If there is a 0, the move is illegal for the given phase
-	*/
+	 /*
+	 Binary numbers to query the possible moves:
+		 - If there is a 1, the move is legal for the given phase
+		 - If there is a 0, the move is illegal for the given phase
+	 */
 	const unsigned int APPLICABLE_MOVES[] = {
 		0,
 		0b111111111111111111,
@@ -37,7 +35,8 @@ namespace rubik {
 	};
 
 	/*
-	What cubies while be modified by turning the given face
+	What cubies while be modified by turning the given face.
+	4 edges [0-11] and 4 corners [0-7]
 	*/
 	const int AFFECTED_CUBIES[][8] = {
 		{0, 1, 2, 3, 0, 1, 2, 3},	// U
@@ -48,28 +47,23 @@ namespace rubik {
 		{1, 8, 5, 10, 1, 0, 4, 7},	// R
 	};
 
-	const unsigned int NUM_POSSIBLE_MOVES = 18;
-	const unsigned int NUM_MOVES_PER_FACE = 3;
-	const unsigned int NUM_EDGES = 12;
-	const unsigned int NUM_CORNERS = 8;
-	const unsigned int TOTAL_NUM_CUBIES = NUM_EDGES + NUM_CORNERS;
+	const static unsigned int NUM_POSSIBLE_MOVES = 18;
+	const static unsigned int NUM_MOVES_PER_FACE = 3;
+	const static unsigned int NUM_EDGES = 12;
+	const static unsigned int NUM_CORNERS = 8;
+	const static unsigned int TOTAL_NUM_CUBIES = NUM_EDGES + NUM_CORNERS;
 
 	class CubeState {
 
-		rubikState state;
+		std::vector<int> _state;
 
 	public:
 		CubeState();
-		CubeState(rubikState s);
-		CubeState applyMove(Move move);
-		rubikState applyMove(int move, rubikState state);
-		rubikState id(unsigned int phase);
-		rubikState getState();
+		CubeState(std::vector<int>& s);
+		CubeState applyMove(int move) const;
+		std::vector<int> id(unsigned int phase) const;
+
+		bool operator<(const CubeState& other_state) const;
 	};
-
-	inline rubikState CubeState::getState() {
-		return state;
-	}
-
 }
 

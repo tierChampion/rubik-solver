@@ -15,15 +15,15 @@ namespace rubik {
 		for (int x = 0; x < DIMENSION; x++) {
 			for (int y = 0; y < DIMENSION; y++) {
 				for (int z = 0; z < DIMENSION; z++) {
-					if (x != 1 || y != 1 || z != 1) cubies.push_back(CubieModel(x, y, z, scale));
+					if (x != 1 || y != 1 || z != 1) _cubies.push_back(CubieModel(x, y, z, scale));
 
 				}
 			}
 		}
 
-		quaternion = glm::quat(glm::vec3(0, 0, 0));
-		steps = 10;
-		currentStep = 0;
+		_quaternion = glm::quat(glm::vec3(0, 0, 0));
+		_steps = 10;
+		_currentStep = 0;
 	}
 
 	/**
@@ -38,9 +38,9 @@ namespace rubik {
 
 		GLint mLocation = glGetUniformLocation(programId, "model");
 
-		for (CubieModel cubie : cubies) {
+		for (CubieModel cubie : _cubies) {
 
-			glm::mat4 m = glm::toMat4(quaternion) * cubie.getModelMat();
+			glm::mat4 m = glm::toMat4(_quaternion) * cubie.getModelMat();
 
 			glUniformMatrix4fv(mLocation, 1, GL_FALSE, &m[0][0]);
 
@@ -57,27 +57,27 @@ namespace rubik {
 	*/
 	void CubeModel::update() {
 
-		if (moves.size() > 0) {
+		if (_moves.size() > 0) {
 
-			glm::vec4 axisAngle = moves.front().toAxisAngle();
+			glm::vec4 axisAngle = _moves.front().toAxisAngle();
 
 			glm::vec3 axis = glm::vec3(axisAngle[0], axisAngle[1], axisAngle[2]);
-			float theta = axisAngle[3] / steps;
+			float theta = axisAngle[3] / _steps;
 
-			for (int target : targets.front()) {
-				cubies[target].turn(theta, axis);
+			for (int target : _targets.front()) {
+				_cubies[target].turn(theta, axis);
 			}
 
-			currentStep++;
-			if (currentStep == steps) {
-				currentStep = 0;
-				moves.pop();
+			_currentStep++;
+			if (_currentStep == _steps) {
+				_currentStep = 0;
+				_moves.pop();
 
-				for (int target : targets.front()) {
-					cubies[target].updateNormals();
+				for (int target : _targets.front()) {
+					_cubies[target].updateNormals();
 				}
 
-				targets.pop();
+				_targets.pop();
 
 				addTargets();
 			}
@@ -91,9 +91,9 @@ namespace rubik {
 	*/
 	void CubeModel::turnFace(Move move) {
 
-		moves.push(move);
+		_moves.push(move);
 
-		if (moves.size() == 1) {
+		if (_moves.size() == 1) {
 			addTargets();
 		}
 	}
@@ -105,33 +105,33 @@ namespace rubik {
 	*/
 	void CubeModel::turnCube(glm::vec2 delta) {
 
-		glm::vec3 upAxis(glm::vec4(0, 1, 0, 0) * glm::toMat4(quaternion));
-		glm::vec3 rightAxis(glm::vec4(1, 0, 0, 0) * glm::toMat4(quaternion));
+		glm::vec3 upAxis(glm::vec4(0, 1, 0, 0) * glm::toMat4(_quaternion));
+		glm::vec3 rightAxis(glm::vec4(1, 0, 0, 0) * glm::toMat4(_quaternion));
 
 		glm::quat yRotation = glm::angleAxis(glm::radians(delta[0]), upAxis);
 		glm::quat xRotation = glm::angleAxis(glm::radians(delta[1]), rightAxis);
 
-		quaternion = glm::normalize(quaternion * (xRotation * yRotation));
+		_quaternion = glm::normalize(_quaternion * (xRotation * yRotation));
 
 	}
 
-	/*
-		Finds the cubies affected by the last move in the queue.
+	/**
+	* Finds the cubies affected by the last move in the queue.
 	*/
 	void CubeModel::addTargets() {
 
-		if (moves.size() > 0) {
+		if (_moves.size() > 0) {
 
-			Move move = moves.front();
+			Move move = _moves.front();
 
 			std::vector<int> moveTargets;
 
-			for (int c = 0; c < cubies.size(); c++) {
+			for (int c = 0; c < _cubies.size(); c++) {
 
-				if (move.affectsPiece(cubies[c].getNormals())) moveTargets.push_back(c);
+				if (move.affectsPiece(_cubies[c].getNormals())) moveTargets.push_back(c);
 			}
 
-			targets.push(moveTargets);
+			_targets.push(moveTargets);
 		}
 	}
 

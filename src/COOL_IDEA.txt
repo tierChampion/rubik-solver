@@ -1,14 +1,17 @@
-Have any mesh be the whole cube.
+1. Slice any given mesh into a cube with different cubies. Would solve like a mirror cube.
 
-Slice the mesh in order to make 26 different Vao's.
+--Pseudocode--
+* Create two meshes (the positive mesh and negative mesh)
+* For each tri in the original mesh, if it intersects with the plane
+	Seperate it into three new tris, two on one side of the plane and one on the other
+* Create new triangles for the new faces created. Either have them turn around the center of the face
+	or fanning along pairs of vertices.s
 
-COMMENTS DONE:
-- glfw
-- helpers
-- image
-- glsl
-- opengl
 
-TODO:
-- app
-- cube
+== Info ==
+Probably dont deal with texture coords and only use the mirror texture for the sliced meshes
+
+2. Add another algorithm (there appearantly exists a two part algorithm <Kociemba's algorithm>?)
+
+== Info ==
+https://en.wikipedia.org/wiki/Optimal_solutions_for_Rubik%27s_Cube

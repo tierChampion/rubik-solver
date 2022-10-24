@@ -6,6 +6,7 @@ namespace rubik {
 	* Initializes a cubie.
 	*
 	* @param the coordinates of the cubie in cubie space
+	* @param scale of the cubie
 	*/
 	CubieModel::CubieModel(int x, int y, int z, float scaleFactor) {
 
@@ -19,15 +20,15 @@ namespace rubik {
 		* Position is half the size of the current cubie plus half the center cubie,
 		* unless the current cubie is the center.
 		*/
-		pos = glm::vec3((x - 1) * (CUBIE_SIZE * (SCALE_FACTOR_X) / 2 + CUBIE_SIZE / 2.0f),
+		_pos = glm::vec3((x - 1) * (CUBIE_SIZE * (SCALE_FACTOR_X) / 2 + CUBIE_SIZE / 2.0f),
 			(y - 1) * (CUBIE_SIZE * (SCALE_FACTOR_Y) / 2 + CUBIE_SIZE / 2.0f),
 			(z - 1) * (CUBIE_SIZE * (SCALE_FACTOR_Z) / 2 + CUBIE_SIZE / 2.0f));
 
-		scaleMat = glm::scale(glm::mat4(1.0f), scale);
+		_scaleMat = glm::scale(glm::mat4(1.0f), scale);
 
-		translateMat = glm::translate(glm::mat4(1.0f), pos);
+		_translateMat = glm::translate(glm::mat4(1.0f), _pos);
 
-		quaternion = glm::quat(glm::vec3(0, 0, 0));
+		_quaternion = glm::quat(glm::vec3(0, 0, 0));
 
 		determineNormals(x, y, z);
 	}
@@ -35,17 +36,16 @@ namespace rubik {
 	/**
 	* Turns the cubie in world space by theta along a given axis in model space.
 	*
-	* @param theta -> angle to turn around the axis
-	* @param axis -> axis to turn around in model space
+	* @param theta - angle to turn around the axis
+	* @param axis - axis to turn around in model space
 	*/
 	void CubieModel::turn(float theta, glm::vec3 axis) {
 
 		/* Rotate the axis so it is in world space. */
-		axis = glm::normalize(glm::vec3(glm::vec4(axis, 1.0) * glm::toMat4(quaternion)));
+		axis = glm::normalize(glm::vec3(glm::vec4(axis, 1.0) * glm::toMat4(_quaternion)));
 
 		glm::quat delta = glm::angleAxis(theta, axis);
-		quaternion = glm::normalize(quaternion * delta);
-
+		_quaternion = glm::normalize(_quaternion * delta);
 	}
 
 	/**
@@ -54,7 +54,7 @@ namespace rubik {
 	*/
 	void CubieModel::updateNormals() {
 
-		glm::mat4 unscaledModelMat = glm::toMat4(quaternion) * translateMat;
+		glm::mat4 unscaledModelMat = glm::toMat4(_quaternion) * _translateMat;
 		glm::vec3 newPos = glm::vec3(unscaledModelMat[3]);
 
 		/* Position in cubie space. */
@@ -73,28 +73,32 @@ namespace rubik {
 	*/
 	void CubieModel::determineNormals(int x, int y, int z) {
 
-		faceNormals.clear();
-		switch (x) {
-		case 0: faceNormals.push_back(glm::vec3(-1.0f, 0.0f, 0.0f)); break;
-		case DIMENSION - 1: faceNormals.push_back(glm::vec3(1.0f, 0.0f, 0.0f)); break;
-		}
+		_faceNormals.clear();
 
-		switch (y) {
-		case 0: faceNormals.push_back(glm::vec3(0.0f, -1.0f, 0.0f)); break;
-		case DIMENSION - 1: faceNormals.push_back(glm::vec3(0.0f, 1.0f, 0.0f)); break;
-		}
+		glm::vec3 pos(x, y, z);
 
-		switch (z) {
-		case 0: faceNormals.push_back(glm::vec3(0.0f, 0.0f, -1.0f)); break;
-		case DIMENSION - 1: faceNormals.push_back(glm::vec3(0.0f, 0.0f, 1.0f)); break;
+		for (int i = 0; i < DIMENSION; i++) {
+			if (pos[i] == 1) continue;
+
+			glm::vec3 normal(0.0f, 0.0f, 0.0f);
+
+			normal[i] = (pos[i] == 0) ? -1.0f : 1.0f;
+
+			_faceNormals.push_back(normal);
 		}
 	}
 
+	/**
+	* @return the model matrix composed of the scale, translation and rotation of the model
+	*/
 	glm::mat4 CubieModel::getModelMat() {
-		return glm::toMat4(quaternion) * translateMat * scaleMat;
+		return glm::toMat4(_quaternion) * _translateMat * _scaleMat;
 	}
 
+	/**
+	* @return the normals of the side this cubie is a part of
+	*/
 	std::vector<glm::vec3> CubieModel::getNormals() {
-		return faceNormals;
+		return _faceNormals;
 	}
 }

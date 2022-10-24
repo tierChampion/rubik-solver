@@ -8,8 +8,8 @@
 namespace rubik {
 	class Cube {
 
-		CubeModel model;
-		CubeState state;
+		CubeModel _model;
+		CubeState _state;
 
 	public:
 		Cube(bool mirror);

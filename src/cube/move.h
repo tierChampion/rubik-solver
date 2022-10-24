@@ -9,6 +9,10 @@
 #include <math.h>
 
 namespace rubik {
+
+	/**
+	* All the legal moves of the Rubik's Cube
+	*/
 	enum Move_Type {
 		U1 = 0, U2 = 1, U3 = 2,
 		D1 = 3, D2 = 4, D3 = 5,
@@ -22,32 +26,45 @@ namespace rubik {
 	const static unsigned int MOVES_PER_FACE = 3;
 
 	struct Move {
-		Move_Type type;
+		Move_Type _type;
 
 		Move(int value) {
-			type = (Move_Type)value;
+			_type = (Move_Type)value;
 		}
 
 		Move(int face, int turns) {
-			type = (Move_Type)(turns - 1 + face * MOVES_PER_FACE);
+			_type = (Move_Type)(turns - 1 + face * MOVES_PER_FACE);
 		}
 
 		Move(Move_Type t) {
-			type = t;
+			_type = t;
 		}
 
+		/**
+		* @return the number of turns of the move.
+		*/
 		int getTurns() {
-			return type % MOVES_PER_FACE + 1;
+			return _type % MOVES_PER_FACE + 1;
 		}
 
+		/**
+		* @return the face that is affected by the move.
+		*/
 		int getFace() {
-			return type / MOVES_PER_FACE;
+			return _type / MOVES_PER_FACE;
 		}
 
+		/**
+		* @return the move that negates this move.
+		*/
 		Move inverse() {
-			return Move(type + 2 - 2 * (type % MOVES_PER_FACE));
+			return Move(_type + 2 - 2 * (_type % MOVES_PER_FACE));
 		}
 
+		/**
+		* Get the rotation modification of the model.
+		* @return the axis to turn around and the angle to turn by
+		*/
 		glm::vec4 toAxisAngle() {
 			glm::vec3 axis(0, 0, 0);
 
@@ -68,6 +85,10 @@ namespace rubik {
 			return glm::vec4(axis, -angle);
 		}
 
+		/**
+		* @param normals - normals of the sides the cubie touches
+		* @return if the piece is part of the side that turns
+		*/
 		bool affectsPiece(std::vector<glm::vec3> normals) {
 
 			int face = getFace();
@@ -86,6 +107,5 @@ namespace rubik {
 
 			return false;
 		}
-
 	};
 }

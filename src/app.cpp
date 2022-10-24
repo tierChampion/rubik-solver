@@ -38,6 +38,7 @@ const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
 const static float NEAR = 0.1f;
 const static float FAR = 100.0f;
 
+// TODO: switch to cube states for solver
 
 bool initGL() {
 	glewExperimental = GL_TRUE;
@@ -167,6 +168,7 @@ int main(int argc, char** argv) {
 	glfwSetKeyCallback(window->getWindow(), Keyboard::turningCube_KeyCallback);
 	glfwSetMouseButtonCallback(window->getWindow(), Mouse::mousebuttonCallback);
 
+	/* Control information */
 	printf("\n=== Controls ===\n");
 	printf("<Face turns>\n");
 	printf("	Q(Red), W(Blue), E(Yellow)\n");
@@ -175,6 +177,7 @@ int main(int argc, char** argv) {
 	printf("<Others>\n");
 	printf("	Enter(Solve the cube)\n");
 	printf("	Backspace(Scramble the cube)\n");
+	printf("	Left click drag(Turn the cube)\n");
 
 	SDK_CHECK_ERROR_GL();
 
@@ -193,7 +196,7 @@ int main(int argc, char** argv) {
 
 		/* Keyboard controls <Face turning, mixing and solving> */
 		rubik::Move input = Keyboard::getMove(window->getWindow());
-		if (input.type != rubik::Move_Type::NONE) {
+		if (input._type != rubik::Move_Type::NONE) {
 			cube.turnFace(input);
 		}
 		if (glfwGetKey(window->getWindow(), GLFW_KEY_ENTER) && frame % 5 == 0) {
@@ -214,5 +217,3 @@ int main(int argc, char** argv) {
 		frame++;
 	}
 }
-
-
