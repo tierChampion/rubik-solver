@@ -3,7 +3,7 @@
 #include <glfw3.h>
 #include "../cube/move.h"
 
-static rubik::Move_Type _m = rubik::Move_Type::NONE;
+static rubik::MoveType _m = rubik::MoveType::NONE;
 
 /**
 * GLFW Keyboard controller.
@@ -20,8 +20,8 @@ public:
 * @param window - GLFW window
 */
 inline rubik::Move Keyboard::getMove(GLFWwindow* window) {
-	rubik::Move_Type returnValue = _m;
-	if (returnValue != rubik::Move_Type::NONE) {
+	rubik::MoveType returnValue = _m;
+	if (returnValue != rubik::MoveType::NONE) {
 
 		int modifier = 0;
 
@@ -32,10 +32,10 @@ inline rubik::Move Keyboard::getMove(GLFWwindow* window) {
 		else if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) ||
 			glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) modifier = 2;
 
-		returnValue = (rubik::Move_Type)(returnValue + modifier);
+		returnValue = (rubik::MoveType)(returnValue + modifier);
 	}
 	// Reset move
-	_m = rubik::Move_Type::NONE;
+	_m = rubik::MoveType::NONE;
 
 	return rubik::Move(returnValue);
 }
@@ -59,32 +59,32 @@ inline void Keyboard::turningCube_KeyCallback(
 
 		/* UP */
 		if (key == GLFW_KEY_Q) {
-			_m = rubik::Move_Type::U1;
+			_m = rubik::MoveType::U1;
 		}
 
 		/* DOWN */
 		else if (key == GLFW_KEY_A) {
-			_m = rubik::Move_Type::D1;
+			_m = rubik::MoveType::D1;
 		}
 
 		/* FRONT */
 		else if (key == GLFW_KEY_W) {
-			_m = rubik::Move_Type::F1;
+			_m = rubik::MoveType::F1;
 		}
 
 		/* BACK */
 		else if (key == GLFW_KEY_S) {
-			_m = rubik::Move_Type::B1;
+			_m = rubik::MoveType::B1;
 		}
 
 		/* LEFT */
 		else if (key == GLFW_KEY_E) {
-			_m = rubik::Move_Type::L1;
+			_m = rubik::MoveType::L1;
 		}
 
 		/* RIGHT */
 		else if (key == GLFW_KEY_D) {
-			_m = rubik::Move_Type::R1;
+			_m = rubik::MoveType::R1;
 		}
 	}
 }

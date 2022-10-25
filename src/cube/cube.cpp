@@ -49,14 +49,16 @@ namespace rubik {
 
 		queue<Move> solution = optimizeSolution(getSolution(_state));
 
-		printf("Solution of %d moves found! \n", solution.size());
+		printf("<SOLUTION> %d moves: ", solution.size());
 
 		while (solution.size() > 0) {
 			Move move = solution.front();
+			std::cout << move << " ";
 			turnFace(move);
 			solution.pop();
 		}
 
+		std::cout << std::endl;
 	}
 
 	/**

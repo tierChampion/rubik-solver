@@ -20,18 +20,18 @@ namespace rubik {
 		while (++phase < 5) {
 
 			// --> Compute ids, skip phase if equal
-			std::vector<int> currentId = currentState.id(phase), goalId = goalState.id(phase); // TODO cubestate.id
+			std::vector<int> currentId = currentState.id(phase), goalId = goalState.id(phase);
 			if (currentId == goalId)
 				continue;
 
 			// --> Initialize the BFS queue
-			queue<CubeState> q; // TODO cubestate
+			queue<CubeState> q;
 			q.push(currentState);
 			q.push(goalState);
 
 			// --> Initialize the BFS tables
-			map<std::vector<int>, std::vector<int>> predecessor; // TODO cubestate, cubestate
-			map<CubeState, int> direction, lastMove; // TODO cubestate, int
+			map<std::vector<int>, std::vector<int>> predecessor;
+			map<CubeState, int> direction, lastMove;
 			direction[currentId] = 1;
 			direction[goalId] = 2;
 
@@ -48,7 +48,7 @@ namespace rubik {
 					if (APPLICABLE_MOVES[phase] & (1 << move)) {
 
 						// --> Apply the move
-						CubeState newState = oldState.applyMove(move); // TODO oldstate.applymove
+						CubeState newState = oldState.applyMove(move);
 						std::vector<int> newId = newState.id(phase);
 						int& newDir = direction[newId];
 
@@ -101,39 +101,51 @@ namespace rubik {
 		return solution;
 	}
 
+	/**
+	* Clean up the solution and simplify useless moves.
+	* @param solution - series of moves to simplify
+	*/
 	queue<Move> optimizeSolution(vector<Move> solution) {
 
 		queue<Move> optimisation;
 
-		if (solution.size() == 0) {
+		if (solution.empty()) {
 			return optimisation;
 		}
 
-		int i;
+		while (solution.size() != 0) {
 
-		for (i = 0; i < solution.size() - 1; i++) {
+			Move current = solution[0];
+			solution.erase(solution.begin());
 
-			if (solution[i].getFace() == solution[i + 1].getFace()) {
-				int turns = (solution[i].getTurns() + solution[i + 1].getTurns()) % 4;
+			int turns = current.getTurns();
+			int face = current.getFace();
 
-				if (turns != 0) {
-					optimisation.push(Move(solution[i].getFace(), turns));
+			int pos = 0;
+			while (solution.size() > pos) {
+
+				/*
+				* Step through the moves and group consecutive moves that turn the same face.
+				* Also jump over opposite face turns since they don't modify the turn.
+				*/
+				if (solution[pos].getAxis() == current.getAxis()) {
+					if (face == solution[pos].getFace()) {
+
+						turns += solution[pos].getTurns();
+						solution.erase(solution.begin() + pos);
+					}
+					else {
+						pos++;
+					}
 				}
-				i++;
-
-			}
-			else {
-				optimisation.push(solution[i]);
+				else break;
 			}
 
+			turns %= 4;
+			if (turns != 0) optimisation.push(Move(face, turns));
 		}
 
-		if (i < solution.size()) {
-			optimisation.push(solution[solution.size() - 1]);
-		}
 		return optimisation;
-
 	}
-
 }
 

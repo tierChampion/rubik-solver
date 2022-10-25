@@ -8,6 +8,7 @@
 #include <map>
 #include <queue>
 #include <algorithm>
+#include <list>
 #include "state.h"
 #include "move.h"
 using namespace std;
@@ -36,6 +37,5 @@ namespace rubik {
 
 	vector<Move> getSolution(CubeState problem);
 	queue<Move> optimizeSolution(vector<Move> solution);
-
 }
 

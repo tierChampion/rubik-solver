@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <vector>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -10,10 +11,14 @@
 
 namespace rubik {
 
+	enum MoveAxis {
+		Y = 0, Z = 1, X = 2,
+	};
+
 	/**
 	* All the legal moves of the Rubik's Cube
 	*/
-	enum Move_Type {
+	enum MoveType {
 		U1 = 0, U2 = 1, U3 = 2,
 		D1 = 3, D2 = 4, D3 = 5,
 		F1 = 6, F2 = 7, F3 = 8,
@@ -26,46 +31,51 @@ namespace rubik {
 	const static unsigned int MOVES_PER_FACE = 3;
 
 	struct Move {
-		Move_Type _type;
+		MoveType _type;
 
 		Move(int value) {
-			_type = (Move_Type)value;
+			_type = (MoveType)value;
 		}
 
 		Move(int face, int turns) {
-			_type = (Move_Type)(turns - 1 + face * MOVES_PER_FACE);
+			_type = (MoveType)(turns - 1 + face * MOVES_PER_FACE);
 		}
 
-		Move(Move_Type t) {
+		Move(MoveType t) {
 			_type = t;
 		}
 
 		/**
 		* @return the number of turns of the move.
 		*/
-		int getTurns() {
+		int getTurns() const {
 			return _type % MOVES_PER_FACE + 1;
 		}
 
 		/**
 		* @return the face that is affected by the move.
 		*/
-		int getFace() {
+		int getFace() const {
 			return _type / MOVES_PER_FACE;
 		}
 
 		/**
 		* @return the move that negates this move.
 		*/
-		Move inverse() {
+		Move inverse() const {
 			return Move(_type + 2 - 2 * (_type % MOVES_PER_FACE));
+		}
+
+		MoveAxis getAxis() const {
+
+			return MoveAxis(getFace() / 2);
 		}
 
 		/**
 		* Get the rotation modification of the model.
 		* @return the axis to turn around and the angle to turn by
 		*/
-		glm::vec4 toAxisAngle() {
+		glm::vec4 toAxisAngle() const {
 			glm::vec3 axis(0, 0, 0);
 
 			int face = getFace();
@@ -89,7 +99,7 @@ namespace rubik {
 		* @param normals - normals of the sides the cubie touches
 		* @return if the piece is part of the side that turns
 		*/
-		bool affectsPiece(std::vector<glm::vec3> normals) {
+		bool affectsPiece(const std::vector<glm::vec3> normals) const {
 
 			int face = getFace();
 
@@ -106,6 +116,29 @@ namespace rubik {
 			}
 
 			return false;
+		}
+
+		/**
+		* Shows the move in the standard rubik's cube format.
+		* @param s - stream to later print
+		* @param move - move to convert to standard format
+		*/
+		friend std::ostream& operator<<(std::ostream& s, const Move& move) {
+
+			int face = move.getFace();
+			int turns = move.getTurns();
+
+			char faceName = 'U' * (face == 0) +
+				'D' * (face == 1) +
+				'F' * (face == 2) +
+				'B' * (face == 3) +
+				'L' * (face == 4) +
+				'R' * (face == 5);
+
+			char turnName = '\'' * (turns == 3) +
+				'2' * (turns == 2);
+
+			return s << faceName << turnName;
 		}
 	};
 }

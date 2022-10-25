@@ -94,9 +94,9 @@ int main(int argc, char** argv) {
 			}
 			else if (arg == "/?") {
 
-				printf("[--mirror | -m] [-fullscreen | -fs]\n");
-				printf("--mirror | -m			Use a mirror cube instead of rubiks cube\n");
-				printf("--fullscreen | -fs		Display in full screen\n");
+				std::cout << "[--mirror | -m] [-fullscreen | -fs]\n"
+					<< "--mirror | -m			Use a mirror cube instead of rubiks cube\n"
+					<< "--fullscreen | -fs		Display in full screen\n" << std::endl;
 				exit(0);
 			}
 		}
@@ -169,15 +169,15 @@ int main(int argc, char** argv) {
 	glfwSetMouseButtonCallback(window->getWindow(), Mouse::mousebuttonCallback);
 
 	/* Control information */
-	printf("\n=== Controls ===\n");
-	printf("<Face turns>\n");
-	printf("	Q(Red), W(Blue), E(Yellow)\n");
-	printf("	A(Orange), S(Green), D(White)\n");
-	printf("	Shift(Counter clockwise), Space(Double turn)\n");
-	printf("<Others>\n");
-	printf("	Enter(Solve the cube)\n");
-	printf("	Backspace(Scramble the cube)\n");
-	printf("	Left click drag(Turn the cube)\n");
+	std::cout << "\n=== Controls ===\n"
+		<< "<Face turns>\n"
+		<< "	Q(Red), W(Blue), E(Yellow)\n"
+		<< "	A(Orange), S(Green), D(White)\n"
+		<< "	Shift(Counter clockwise), Space(Double turn)\n"
+		<< "<Others>\n"
+		<< "	Enter(Solve the cube)\n"
+		<< "	Backspace(Scramble the cube)\n"
+		<< "	Left click drag(Turn the cube)\n" << std::endl;
 
 	SDK_CHECK_ERROR_GL();
 
@@ -196,7 +196,7 @@ int main(int argc, char** argv) {
 
 		/* Keyboard controls <Face turning, mixing and solving> */
 		rubik::Move input = Keyboard::getMove(window->getWindow());
-		if (input._type != rubik::Move_Type::NONE) {
+		if (input._type != rubik::MoveType::NONE) {
 			cube.turnFace(input);
 		}
 		if (glfwGetKey(window->getWindow(), GLFW_KEY_ENTER) && frame % 5 == 0) {

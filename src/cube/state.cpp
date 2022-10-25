@@ -15,6 +15,10 @@ namespace rubik {
 		_state = s;
 	}
 
+	/**
+	* Calculate the new state after a given move is applied.
+	* @param move - move to apply
+	*/
 	CubeState CubeState::applyMove(int move) const {
 		int turns = move % NUM_MOVES_PER_FACE + 1;
 		int face = move / NUM_MOVES_PER_FACE;
@@ -24,19 +28,56 @@ namespace rubik {
 		while (turns--) {
 			std::vector<int> oldState = current_state;
 
-			for (int i = 0; i < NUM_CORNERS; i++) {
-				int isCorner = i > 3;
+			for (int i = 0; i < 8; i++) {
+				int isCorner = (i >= 4);
+				// Swap (0 <- 1 <- 2 <- 3 <- 0) for both edges and corners
 				int target = AFFECTED_CUBIES[face][i] + isCorner * NUM_EDGES;
-				int killer = AFFECTED_CUBIES[face][(i & 3) == 3 ? i - 3 : i + 1] + isCorner * NUM_EDGES;
-				int orientationDelta = (i < 4) ? (face > 1 && face < 4) : (face < 2) ? 0 : 2 - (i & 1);
+				int newIndex = 0;
+
+				if (i % 4 == 3) newIndex = i - 3;
+				else newIndex = i + 1;
+
+				int newVal = AFFECTED_CUBIES[face][newIndex] + isCorner * NUM_EDGES;
+
+				int orientationDelta = 0;
+
+				/*
+					Edges only change orientation with one pair of move types.
+					The two other pair can always replace the edges to their original state,
+					but the last pair flips the edge piece.
+				*/
+				if (i <= 3) orientationDelta = (face == 2 || face == 3);
+
+				// Corners always change except with up or down moves.
+				else if (face <= 1) orientationDelta = 0;
+
+				/*
+				* Corner 0: +1 (F) +2 (R)
+				* Corner 1: +1 (R) +2 (B)
+				* Corner 2: +1 (B) +2 (L)
+				* Corner 3: +1 (L) +2 (F)
+				* Corner 4: +1 (R) +2 (F)
+				* Corner 5: +1 (F) +2 (L)
+				* Corner 6: +1 (L) +2 (B)
+				* Corner 7: +1 (B) +2 (R)
+				*/
+				else orientationDelta = 2 - (i % 2);
+
+
+
+				target = AFFECTED_CUBIES[face][i] + isCorner * NUM_EDGES;
+				newVal = AFFECTED_CUBIES[face][(i & 3) == 3 ? i - 3 : i + 1] + isCorner * NUM_EDGES;
+				orientationDelta = (i < 4) ? (face > 1 && face < 4) : (face < 2) ? 0 : 2 - (i & 1);
 
 				/*
 				Move and change orientation
 				*/
-				current_state[target] = oldState[killer];
-				current_state[target + TOTAL_NUM_CUBIES] = oldState[killer + TOTAL_NUM_CUBIES] + orientationDelta;
+				current_state[target] = oldState[newVal];
+				current_state[target + TOTAL_NUM_CUBIES] =
+					oldState[newVal + TOTAL_NUM_CUBIES] + orientationDelta;
 
-				if (!turns)
+				// Clamp the orientation
+				if (turns != 0)
 					current_state[target + TOTAL_NUM_CUBIES] %= 2 + isCorner;
 			}
 		}
@@ -67,7 +108,7 @@ namespace rubik {
 			std::vector<int> result(3);
 			// TODO check something for edges
 			for (int e = 0; e < NUM_EDGES; e++)
-				result[0] |= ((_state[e] > 7) ? 2 : (_state[e] & 1)) << (2 * e);
+				result[0] |= ((_state[e] >= 8) ? 2 : (_state[e] & 1)) << (2 * e);
 			// TODO check something for corners
 			for (int c = 0; c < NUM_CORNERS; c++)
 				result[1] |= ((_state[c + NUM_EDGES] - NUM_EDGES) & 5) << (3 * c);

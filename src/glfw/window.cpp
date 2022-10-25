@@ -78,11 +78,11 @@ int Window::init(float aspect_ratio, bool fullScreen) {
 		_window = glfwCreateWindow(_width, _height, _title, NULL, NULL);
 	}
 	else {
+		// Resize the window for fullscreen, keeping the aspect ratio
 		GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 		glfwGetMonitorWorkarea(monitor, NULL, NULL, NULL, &_height);
 		_width = aspect_ratio * _height;
 		_window = glfwCreateWindow(_width, _height, _title, monitor, NULL);
-		printf("%d %d\n", _width, _height);
 	}
 
 	if (_window == nullptr) {
