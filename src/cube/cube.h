@@ -10,6 +10,7 @@ namespace rubik {
 
 		CubeModel _model;
 		CubeState _state;
+		bool _solving = false;
 
 	public:
 		Cube(bool mirror);
@@ -18,6 +19,7 @@ namespace rubik {
 		void turnFace(Move move);
 		void turnCube(glm::vec2 delta);
 		void solve();
+		bool isSolving();
 		void mix();
 
 	};

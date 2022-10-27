@@ -19,9 +19,9 @@ namespace rubik {
 	* Calculate the new state after a given move is applied.
 	* @param move - move to apply
 	*/
-	CubeState CubeState::applyMove(int move) const {
-		int turns = move % NUM_MOVES_PER_FACE + 1;
-		int face = move / NUM_MOVES_PER_FACE;
+	CubeState CubeState::applyMove(const Move move) const {
+		int turns = move.getTurns();
+		int face = move.getFace();
 
 		std::vector<int> current_state = this->_state;
 
@@ -85,15 +85,15 @@ namespace rubik {
 		return current_state;
 	}
 
-	std::vector<int> CubeState::id(unsigned int phase) const {
+	std::vector<int> CubeState::thistlethwaiteId(unsigned int phase) const {
 		// --> Phase 1: Edge orientations (orientation of the 12 first cubies)
-		if (phase < 2)
+		if (phase == 0)
 			// orientation of the edges
 			return std::vector<int>(_state.begin() + TOTAL_NUM_CUBIES, _state.begin() + TOTAL_NUM_CUBIES + NUM_EDGES);
 
 		// --> Phase 2: Corner orientations, E slice edges 
 		// (12 edges as int in index 0 and orientation of corners in rest)
-		if (phase < 3) {
+		if (phase == 1) {
 			// orientation of the corners
 			std::vector<int> result(_state.begin() + TOTAL_NUM_CUBIES + NUM_EDGES - 1, _state.begin() + 40);
 			// store each state[e] in bits of result[0]. Store 0 if state[0] < 8 else store 1
@@ -104,7 +104,7 @@ namespace rubik {
 		}
 
 		// --> Phase 3: Edge slices M and S, corner tetrads, overall parity
-		if (phase < 4) {
+		if (phase == 2) {
 			std::vector<int> result(3);
 			// TODO check something for edges
 			for (int e = 0; e < NUM_EDGES; e++)

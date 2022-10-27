@@ -27,7 +27,6 @@ namespace rubik {
 		 - If there is a 0, the move is illegal for the given phase
 	 */
 	const unsigned int APPLICABLE_MOVES[] = {
-		0,
 		0b111111111111111111, // {U, D, F, B, L, R}
 		0b111111010010111111, // {U, D, F2, B2, L, R}
 		0b10010010010111111, //0b10010010010111111, // {U2, D2, F2, B2, L, R}
@@ -60,8 +59,8 @@ namespace rubik {
 	public:
 		CubeState();
 		CubeState(std::vector<int>& s);
-		CubeState applyMove(int move) const;
-		std::vector<int> id(unsigned int phase) const;
+		CubeState applyMove(const Move move) const;
+		std::vector<int> thistlethwaiteId(unsigned int phase) const;
 
 		bool operator<(const CubeState& other_state) const;
 	};

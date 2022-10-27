@@ -11,6 +11,8 @@
 #define _USE_MATH_DEFINES
 
 #include <math.h>
+#include <thread>
+#include <future>
 
 #include "image/texture.h"
 #include "glfw/window.h"
@@ -37,8 +39,6 @@ const static float FOV = 30.0f;
 const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
 const static float NEAR = 0.1f;
 const static float FAR = 100.0f;
-
-// TODO: switch to cube states for solver
 
 bool initGL() {
 	glewExperimental = GL_TRUE;
@@ -196,14 +196,17 @@ int main(int argc, char** argv) {
 
 		/* Keyboard controls <Face turning, mixing and solving> */
 		rubik::Move input = Keyboard::getMove(window->getWindow());
-		if (input._type != rubik::MoveType::NONE) {
+		if (input._type != rubik::MoveType::NONE && !cube.isSolving()) {
 			cube.turnFace(input);
 		}
-		if (glfwGetKey(window->getWindow(), GLFW_KEY_ENTER) && frame % 5 == 0) {
-			cube.solve();
+
+		/* Solve the rubik's cube. Do this asynchronously since it can be long */
+		if (glfwGetKey(window->getWindow(), GLFW_KEY_ENTER) && !cube.isSolving()) {
+			std::thread solvingThread(&rubik::Cube::solve, &cube);
+			solvingThread.detach();
 			frame = 0;
 		}
-		if (glfwGetKey(window->getWindow(), GLFW_KEY_BACKSPACE) && frame % 5 == 0) {
+		if (glfwGetKey(window->getWindow(), GLFW_KEY_BACKSPACE) && frame % 5 == 0 && !cube.isSolving()) {
 			cube.mix();
 			frame = 0;
 		}

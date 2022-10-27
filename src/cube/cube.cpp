@@ -47,7 +47,9 @@ namespace rubik {
 	*/
 	void Cube::solve() {
 
-		queue<Move> solution = optimizeSolution(getSolution(_state));
+		_solving = true;
+
+		std::queue<Move> solution = optimizeSolution(getSolution(_state));
 
 		printf("<SOLUTION> %d moves: ", solution.size());
 
@@ -59,6 +61,11 @@ namespace rubik {
 		}
 
 		std::cout << std::endl;
+		_solving = false;
+	}
+
+	bool Cube::isSolving() {
+		return _solving;
 	}
 
 	/**

@@ -33,6 +33,8 @@ namespace rubik {
 	struct Move {
 		MoveType _type;
 
+		Move() { _type = (MoveType)0; }
+
 		Move(int value) {
 			_type = (MoveType)value;
 		}
