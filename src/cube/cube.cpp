@@ -29,7 +29,6 @@ namespace rubik {
 
 		_model.turnFace(move);
 		_state = _state.applyMove(move._type);
-
 	}
 
 	/**
@@ -49,7 +48,7 @@ namespace rubik {
 
 		_solving = true;
 
-		std::queue<Move> solution = optimizeSolution(getSolution(_state));
+		std::queue<Move> solution = optimizeSolution(kociemba(_state));
 
 		printf("<SOLUTION> %d moves: ", solution.size());
 

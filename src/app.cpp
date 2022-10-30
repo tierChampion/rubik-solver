@@ -206,9 +206,14 @@ int main(int argc, char** argv) {
 			solvingThread.detach();
 			frame = 0;
 		}
+		/* Scramble the rubik's cube */
 		if (glfwGetKey(window->getWindow(), GLFW_KEY_BACKSPACE) && frame % 5 == 0 && !cube.isSolving()) {
 			cube.mix();
 			frame = 0;
+		}
+		/* Display cubestate */
+		if (glfwGetKey(window->getWindow(), GLFW_KEY_0) && frame % 10 == 0 && !cube.isSolving()) {
+			std::cout << cube;
 		}
 
 		SDK_CHECK_ERROR_GL();

@@ -8,13 +8,16 @@
 #include <map>
 #include <queue>
 #include <algorithm>
-#include <list>
 #include "state.h"
 #include "move.h"
 
 namespace rubik {
 
-	std::vector<Move> getSolution(CubeState problem);
+	const unsigned static int THISTLETHWAITE_PHASE_COUNT = 4;
+	const unsigned static int KOCIEMBA_PHASE_COUNT = 2;
+
+	std::vector<Move> thistlethwaite(CubeState problem);
+	std::vector<Move> kociemba(CubeState problem);
 	std::queue<Move> optimizeSolution(std::vector<Move> solution);
 }
 

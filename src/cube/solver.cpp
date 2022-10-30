@@ -6,7 +6,7 @@ namespace rubik {
 	* Compute an algorithm to solve the current srambled state of the cube.
 	* @param problem - state of the cube to solve
 	*/
-	std::vector<Move> getSolution(CubeState problem) {
+	std::vector<Move> thistlethwaite(CubeState problem) {
 
 		std::vector<Move> solution;
 		CubeState currentState = problem;
@@ -16,9 +16,9 @@ namespace rubik {
 
 		int phase = 0;
 
-		while (phase <= 3) {
+		while (phase < THISTLETHWAITE_PHASE_COUNT) {
 
-			std::vector<int> currentId = currentState.thistlethwaiteId(phase),
+			std::vector<uint16_t> currentId = currentState.thistlethwaiteId(phase),
 				goalId = goalState.thistlethwaiteId(phase);
 
 			// Skip the phase if already solved
@@ -35,17 +35,17 @@ namespace rubik {
 			/* BFS TABLES */
 
 			// State allong with the state that was used to reach it
-			std::map<std::vector<int>, std::vector<int>> predecessor;
+			std::map<std::vector<uint16_t>, std::vector<uint16_t>> predecessor;
 
 			// Direction from which the state was reached. 1 if the state was reached from
 			// the scrambled state and -1 if it was reached from the solved state. A direction
 			// of 0 means that the state was never reached before.
-			std::map<std::vector<int>, int> direction;
+			std::map<std::vector<uint16_t>, int8_t> direction;
 			direction[currentId] = 1;
 			direction[goalId] = -1;
 
 			// Move that was used to reach the state
-			std::map<std::vector<int>, Move> lastMove;
+			std::map<std::vector<uint16_t>, Move> lastMove;
 
 
 			bool finishedPhase = false;
@@ -55,18 +55,18 @@ namespace rubik {
 				// State to explore from
 				CubeState oldState = q.front();
 				q.pop();
-				std::vector<int> oldId = oldState.thistlethwaiteId(phase);
-				int& oldDir = direction[oldId];
+				std::vector<uint16_t> oldId = oldState.thistlethwaiteId(phase);
+				int8_t& oldDir = direction[oldId];
 
 				// Explore all the legal moves for new states
 				for (int m = 0; m < NUM_POSSIBLE_MOVES && !finishedPhase; m++) {
-					if (APPLICABLE_MOVES[phase] & (1 << m)) {
+					if (THISTLETHWAITE_MOVES[phase] & (1 << m)) {
 
 						Move move(m);
 
 						CubeState newState = oldState.applyMove(move);
-						std::vector<int> newId = newState.thistlethwaiteId(phase);
-						int& newDir = direction[newId];
+						std::vector<uint16_t> newId = newState.thistlethwaiteId(phase);
+						int8_t& newDir = direction[newId];
 
 						// The new state has already been seen and it has a different direction.
 						// This means that the scrambled and solved states are now connected.
@@ -99,6 +99,124 @@ namespace rubik {
 							}
 
 							finishedPhase = true;
+						}
+
+						// State was never seen. Update the tables and set the direction.
+						if (!newDir) {
+							q.push(newState);
+							newDir = oldDir;
+							lastMove[newId] = move;
+							predecessor[newId] = oldId;
+						}
+					}
+				}
+			}
+			phase++;
+		}
+
+		return solution;
+	}
+
+	std::vector<Move> kociemba(CubeState problem) {
+
+		/*
+		TODO:
+		No lookup tables means that the algorithm gets really long for difficult srcrambles.
+		Possibly try to lengthen the phase 1, since it apperantly shortens the phase 2.
+		*/
+
+		std::vector<Move> solution;
+		CubeState currentState = problem;
+
+		// Initialise the goal state to the solved state [0, 1, ..., 19 / 0, 0, ..., 0]
+		CubeState goalState;
+
+		int phase = 0;
+
+		while (phase < KOCIEMBA_PHASE_COUNT) {
+
+			std::vector<uint16_t> currentId = currentState.kociembaId(phase),
+				goalId = goalState.kociembaId(phase);
+
+			// Skip the phase if already solved
+			if (currentId == goalId) {
+				phase++;
+				continue;
+			}
+
+			/* BFS QUEUE */
+			std::queue<CubeState> q;
+			q.push(currentState);
+			q.push(goalState);
+
+			/* BFS TABLES */
+
+			// State allong with the state that was used to reach it
+			std::map<std::vector<uint16_t>, std::vector<uint16_t>> predecessor;
+
+			// Direction from which the state was reached. 1 if the state was reached from
+			// the scrambled state and -1 if it was reached from the solved state. A direction
+			// of 0 means that the state was never reached before.
+			std::map<std::vector<uint16_t>, int8_t> direction;
+			direction[currentId] = 1;
+			direction[goalId] = -1;
+
+			// Move that was used to reach the state
+			std::map<std::vector<uint16_t>, Move> lastMove;
+
+
+			bool finishedPhase = false;
+
+			while (!finishedPhase) {
+
+				// State to explore from
+				CubeState oldState = q.front();
+				q.pop();
+				std::vector<uint16_t> oldId = oldState.kociembaId(phase);
+				int8_t& oldDir = direction[oldId];
+
+				// Explore all the legal moves for new states
+				for (int m = 0; m < NUM_POSSIBLE_MOVES && !finishedPhase; m++) {
+					if (KOCIEMBA_MOVES[phase] & (1 << m)) {
+
+						Move move(m);
+
+						CubeState newState = oldState.applyMove(move);
+						std::vector<uint16_t> newId = newState.kociembaId(phase);
+						int8_t& newDir = direction[newId];
+
+						// The new state has already been seen and it has a different direction.
+						// This means that the scrambled and solved states are now connected.
+						if (newDir && newDir != oldDir) {
+
+							// If the state comes from the solved state, invert the moves.
+							if (oldDir < 0) {
+								swap(newId, oldId);
+								move = move.inverse();
+							}
+
+							std::vector<Move> algorithm(1, move);
+
+							// Connect the positive path
+							while (oldId != currentId) {
+								algorithm.insert(algorithm.begin(), lastMove[oldId]);
+								oldId = predecessor[oldId];
+							}
+
+							// Connect the negative path
+							while (newId != goalId) {
+								algorithm.push_back(lastMove[newId].inverse());
+								newId = predecessor[newId];
+							}
+
+							// Apply the algorithm to the srambled state
+							for (int i = 0; i < algorithm.size(); i++) {
+								solution.push_back(algorithm[i]);
+								currentState = currentState.applyMove(algorithm[i]);
+							}
+
+							finishedPhase = true;
+							std::cout << solution.size() << std::endl;
 						}
 
 						// State was never seen. Update the tables and set the direction.

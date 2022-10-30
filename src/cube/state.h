@@ -13,6 +13,12 @@ namespace rubik {
 	 * a certain position (regarding the input ordering). The first
 	 * twelve are for edges, the last eight for corners.
 	 *
+	 * The precise order for edges is:
+	 *		UF, UR, UB, UL, DF, DR, DB, DL, FR, FL, BR, BL
+	 *
+	 * The precise order for corner is:
+	 *		URF, URB, ULB, ULF, DRF, DRB, DLB, DLF
+	 *
 	 * The last 20 entries are for the orientations, each describing
 	 * how often the cubie at a certain position has been turned
 	 * counterclockwise away from the correct orientation. Again the
@@ -26,11 +32,16 @@ namespace rubik {
 		 - If there is a 1, the move is legal for the given phase
 		 - If there is a 0, the move is illegal for the given phase
 	 */
-	const unsigned int APPLICABLE_MOVES[] = {
+	const unsigned int THISTLETHWAITE_MOVES[] = {
 		0b111111111111111111, // {U, D, F, B, L, R}
 		0b111111010010111111, // {U, D, F2, B2, L, R}
-		0b10010010010111111, //0b10010010010111111, // {U2, D2, F2, B2, L, R}
-		0b10010010010010010, //0b10010010010010010,
+		0b010010010010111111, // {U, D, F2, B2, L2, R2}
+		0b010010010010010010, // {U2, D2, F2, B2, L2, R2}
+	};
+
+	const unsigned int KOCIEMBA_MOVES[] = {
+		0b111111111111111111, // {U, D, F, B, L, R}
+		0b010010010010111111,// {U, D, F2, B2, L2, R2}
 	};
 
 	/*
@@ -54,15 +65,17 @@ namespace rubik {
 
 	class CubeState {
 
-		std::vector<int> _state;
+		std::vector<uint8_t> _state;
 
 	public:
 		CubeState();
-		CubeState(std::vector<int>& s);
+		CubeState(std::vector<uint8_t>& s);
 		CubeState applyMove(const Move move) const;
-		std::vector<int> thistlethwaiteId(unsigned int phase) const;
+		std::vector<uint16_t> thistlethwaiteId(unsigned int phase) const;
+		std::vector<uint16_t> kociembaId(unsigned int phase) const;
 
 		bool operator<(const CubeState& other_state) const;
+		int operator[](const int i) const;
 	};
 }
 
