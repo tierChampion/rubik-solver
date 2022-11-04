@@ -13,11 +13,9 @@
 
 namespace rubik {
 
-	const unsigned static int THISTLETHWAITE_PHASE_COUNT = 4;
-	const unsigned static int KOCIEMBA_PHASE_COUNT = 2;
+	const unsigned static int THISTLETHWAITE_KOCIEMBA_PHASE_COUNT = 3;
 
-	std::vector<Move> thistlethwaite(CubeState problem);
-	std::vector<Move> kociemba(CubeState problem);
+	std::vector<Move> thistlethwaite_kociemba(CubeState problem);
 	std::queue<Move> optimizeSolution(std::vector<Move> solution);
 }
 

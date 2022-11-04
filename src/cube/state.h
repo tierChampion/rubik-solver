@@ -33,10 +33,10 @@ namespace rubik {
 		 - If there is a 0, the move is illegal for the given phase
 	 */
 	const unsigned int THISTLETHWAITE_MOVES[] = {
-		0b111111111111111111, // {U, D, F, B, L, R}
-		0b111111010010111111, // {U, D, F2, B2, L, R}
+		//0b111111111111111111, // {U, D, F, B, L, R}
+		0b111111111111111111,//0b111111010010111111, // {U, D, F2, B2, L, R}
 		0b010010010010111111, // {U, D, F2, B2, L2, R2}
-		0b010010010010010010, // {U2, D2, F2, B2, L2, R2}
+		0b010010010010111111, // {U, D, F2, B2, L2, R2}
 	};
 
 	const unsigned int KOCIEMBA_MOVES[] = {
@@ -60,6 +60,7 @@ namespace rubik {
 	const static unsigned int NUM_POSSIBLE_MOVES = 18;
 	const static unsigned int NUM_MOVES_PER_FACE = 3;
 	const static unsigned int NUM_EDGES = 12;
+	const static unsigned int NUM_MIDDLE_EDGES = 4;
 	const static unsigned int NUM_CORNERS = 8;
 	const static unsigned int TOTAL_NUM_CUBIES = NUM_EDGES + NUM_CORNERS;
 
@@ -71,11 +72,21 @@ namespace rubik {
 		CubeState();
 		CubeState(std::vector<uint8_t>& s);
 		CubeState applyMove(const Move move) const;
-		std::vector<uint16_t> thistlethwaiteId(unsigned int phase) const;
-		std::vector<uint16_t> kociembaId(unsigned int phase) const;
+		std::vector<uint16_t> thistlethwaite_kociembaId(unsigned int phase) const;
+		std::vector<uint16_t> new_thistlethwaite_kociembaId(unsigned int phase) const;
+		int size() const;
 
 		bool operator<(const CubeState& other_state) const;
 		int operator[](const int i) const;
+
+		friend std::ostream& operator<<(std::ostream& s, const CubeState& state) {
+
+			for (int i = 0; i < 40; i++) {
+				s << state[i];
+			}
+
+			return s << "\n";
+		}
 	};
 }
 

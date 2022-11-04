@@ -47,6 +47,10 @@ namespace rubik {
 			_type = t;
 		}
 
+		int code() const {
+			return _type;
+		}
+
 		/**
 		* @return the number of turns of the move.
 		*/

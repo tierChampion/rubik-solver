@@ -48,7 +48,7 @@ namespace rubik {
 
 		_solving = true;
 
-		std::queue<Move> solution = optimizeSolution(kociemba(_state));
+		std::queue<Move> solution = optimizeSolution(thistlethwaite_kociemba(_state));
 
 		printf("<SOLUTION> %d moves: ", solution.size());
 

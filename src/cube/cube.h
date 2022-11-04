@@ -22,19 +22,9 @@ namespace rubik {
 		bool isSolving();
 		void mix();
 
-		/**
-		* Shows the move in the standard rubik's cube format.
-		* @param s - stream to later print
-		* @param move - move to convert to standard format
-		*/
 		friend std::ostream& operator<<(std::ostream& s, const Cube& cube) {
 
-			for (int i = 0; i < 40; i++) {
-				s << cube._state[i];
-			}
-
-
-			return s << "\n";
+			return s << cube._state;
 		}
 
 	};

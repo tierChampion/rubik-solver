@@ -42,11 +42,9 @@ namespace rubik {
 
 				int orientationDelta = 0;
 
-
 				// Edges only change orientation with one pair of move types.
 				// The two other pair can always replace the edges to their original state,
 				// but the last pair flips the edge piece.
-
 				if (i <= 3) orientationDelta = (face == 2 || face == 3);
 
 				// Corners always change except with up or down moves.
@@ -80,28 +78,16 @@ namespace rubik {
 	}
 
 	/**
-	* Compute the thistlethwaite metrics depending on the phase.
+	* Compute the metrics for the thistlethwaite-kociemba algorithm depending on the phase.
 	* @param phase - current phase of the algorithm
 	*/
-	std::vector<uint16_t> CubeState::thistlethwaiteId(unsigned int phase) const {
-		// Phase 1: Edge orientations
+	std::vector<uint16_t> CubeState::thistlethwaite_kociembaId(unsigned int phase) const {
+
+		// Phase 1: Orientations and middle slice edges
 		if (phase == 0) {
 
-			std::vector<uint16_t> metrics(1, 0);
-			// Orientation of the edges
-			for (int e = TOTAL_NUM_CUBIES; e < TOTAL_NUM_CUBIES + NUM_EDGES - 1; e++) {
-				metrics[0] *= 2;
-				metrics[0] += _state[e];
-			}
-
-			return metrics;
-		}
-		// Phase 2: Corner orientations and restriction of the middle edges to the middle slice
-		else if (phase == 1) {
-
 			// Orientation of the corners
-			std::vector<uint16_t> metrics(2, 0);
-
+			std::vector<uint16_t> metrics(3, 0);
 			for (int e = TOTAL_NUM_CUBIES + NUM_EDGES; e < 2 * TOTAL_NUM_CUBIES; e++) {
 				metrics[0] *= 3;
 				metrics[0] += _state[e];
@@ -111,13 +97,19 @@ namespace rubik {
 			// in the slice between Red(U) and Orange(D) in their solved state
 			// Place all the middle edges in their slice
 			for (int e = 0; e < NUM_EDGES; e++)
-				metrics[1] |= (_state[e] / 8) << e;
+				metrics[1] |= (_state[e] / (NUM_EDGES - NUM_MIDDLE_EDGES)) << e;
+
+			// Orientation of the edges
+			for (int e = TOTAL_NUM_CUBIES; e < TOTAL_NUM_CUBIES + NUM_EDGES - 1; e++) {
+				metrics[2] *= 2;
+				metrics[2] += _state[e];
+			}
 
 			return metrics;
 		}
 
 		// Phase 3: Consider the rough position of the edges, the rough position of the corners
-		else if (phase == 2) {
+		else if (phase == 1) {
 			std::vector<uint16_t> metrics(3);
 
 			// Store '11' for edges in the middle slice or either '01' or '00' for other edges
@@ -145,10 +137,10 @@ namespace rubik {
 			return metrics;
 		}
 
-		// Phase 4: Consider the whole cube.
+		// Phase 4: Consider the positions of each cubies
 		std::vector<uint16_t> metrics(3, 0);
 
-		// corner permutation
+		// Corner permutations
 		for (int i = NUM_CORNERS - 1; i >= 1; i--) {
 
 			for (int j = i - 1; j >= 0; j--) {
@@ -158,8 +150,8 @@ namespace rubik {
 			metrics[0] *= i;
 		}
 
-		// edge permutation
-		for (int i = 8 - 1; i >= 1; i--) {
+		// Top and bottom edge permutations
+		for (int i = NUM_EDGES - NUM_MIDDLE_EDGES - 1; i >= 1; i--) {
 
 			for (int j = i - 1; j >= 0; j--) {
 				metrics[1] += (_state[i] < _state[j]);
@@ -168,8 +160,8 @@ namespace rubik {
 			metrics[1] *= i;
 		}
 
-		// udslice coordinates
-		for (int i = 3; i > 0; i--) {
+		// Middle slice permutations
+		for (int i = NUM_MIDDLE_EDGES - 1; i >= 1; i--) {
 
 			for (int j = i - 1; j >= 0; j--) {
 				metrics[2] += (_state[i + 8] < _state[j + 8]);
@@ -181,81 +173,8 @@ namespace rubik {
 		return metrics;
 	}
 
-	/**
-	* TODO: Problem with edges it seems
-	*/
-	std::vector<uint16_t> CubeState::kociembaId(unsigned int phase) const {
-
-		if (phase == 0) {
-
-			std::vector<uint16_t> metrics(3);
-
-			// edge orientation
-			for (int e = TOTAL_NUM_CUBIES; e < TOTAL_NUM_CUBIES + NUM_EDGES - 1; e++) {
-				metrics[0] *= 2;
-				metrics[0] += _state[e];
-			}
-
-			// corner orientation
-			for (int c = TOTAL_NUM_CUBIES + NUM_EDGES; c < 2 * TOTAL_NUM_CUBIES - 1; c++) {
-				metrics[1] *= 3;
-				metrics[1] += _state[c];
-			}
-
-			// middle slice edges
-			int occupied = -1;
-			for (int e = 0; e < NUM_EDGES; e++) {
-
-				if (_state[e] >= 8) occupied++;
-				else if (occupied >= 0) {
-
-					int choose = 1;
-
-					for (int i = 0; i < occupied; i++) {
-						choose *= (e - i) / (i + 1);
-					}
-
-					metrics[2] += choose;
-				}
-			}
-
-			return metrics;
-		}
-
-		std::vector<uint16_t> metrics(3);
-
-
-		// corner permutation
-		for (int i = NUM_CORNERS - 1; i >= 1; i--) {
-
-			for (int j = i - 1; j >= 0; j--) {
-				metrics[0] += (_state[i + NUM_EDGES] < _state[j + NUM_EDGES]);
-			}
-
-			metrics[0] *= i;
-		}
-
-		// edge permutation
-		for (int i = 8 - 1; i >= 1; i--) {
-
-			for (int j = i - 1; j >= 0; j--) {
-				metrics[1] += (_state[i] < _state[j]);
-			}
-
-			metrics[1] *= i;
-		}
-
-		// udslice coordinates
-		for (int i = 3; i > 0; i--) {
-
-			for (int j = i - 1; j >= 0; j--) {
-				metrics[2] += (_state[i + 8] < _state[j + 8]);
-			}
-
-			metrics[2] *= i;
-		}
-
-		return metrics;
+	int CubeState::size() const {
+		return _state.size();
 	}
 
 	/**
