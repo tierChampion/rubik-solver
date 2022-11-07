@@ -48,18 +48,22 @@ namespace rubik {
 
 		_solving = true;
 
-		std::queue<Move> solution = optimizeSolution(thistlethwaite_kociemba(_state));
+		std::queue<Move> solution = optimizeSolution(thistlethwaiteKociemba(_state));
 
-		printf("<SOLUTION> %d moves: ", solution.size());
+		// Show the solution in the terminal
+		if (!solution.empty()) {
+			printf("<SOLUTION> %d moves: ", solution.size());
 
-		while (solution.size() > 0) {
-			Move move = solution.front();
-			std::cout << move << " ";
-			turnFace(move);
-			solution.pop();
+			while (solution.size() > 0) {
+				Move move = solution.front();
+				std::cout << move << " ";
+				turnFace(move);
+				solution.pop();
+			}
+
+			std::cout << std::endl;
 		}
 
-		std::cout << std::endl;
 		_solving = false;
 	}
 
@@ -72,8 +76,8 @@ namespace rubik {
 	*/
 	void Cube::mix() {
 
-		/* Mix between 10 and 30 moves. */
-		int lengthOfMix = rand() % 20 + 20;
+		/* Mix between 40 and 60 moves. */
+		int lengthOfMix = rand() % 20 + 40;
 
 		for (int i = 0; i < lengthOfMix; i++) {
 			Move randomMove(rand() % NUM_POSSIBLE_MOVES);

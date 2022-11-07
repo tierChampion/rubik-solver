@@ -81,7 +81,7 @@ namespace rubik {
 	* Compute the metrics for the thistlethwaite-kociemba algorithm depending on the phase.
 	* @param phase - current phase of the algorithm
 	*/
-	std::vector<uint16_t> CubeState::thistlethwaite_kociembaId(unsigned int phase) const {
+	std::vector<uint16_t> CubeState::thistlethwaiteKociembaId(unsigned int phase) const {
 
 		// Phase 1: Orientations and middle slice edges
 		if (phase == 0) {

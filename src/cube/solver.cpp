@@ -9,7 +9,7 @@ namespace rubik {
 	* the first one is similar to the Thistlethwaite while the second phase is the Kociemba's.
 	* @param problem - state of the cube to solve
 	*/
-	std::vector<Move> thistlethwaite_kociemba(CubeState problem) {
+	std::vector<Move> thistlethwaiteKociemba(CubeState problem) {
 
 		std::vector<Move> solution;
 		CubeState currentState = problem;
@@ -21,8 +21,8 @@ namespace rubik {
 
 		while (phase < THISTLETHWAITE_KOCIEMBA_PHASE_COUNT) {
 
-			std::vector<uint16_t> currentId = currentState.thistlethwaite_kociembaId(phase),
-				goalId = goalState.thistlethwaite_kociembaId(phase);
+			std::vector<uint16_t> currentId = currentState.thistlethwaiteKociembaId(phase),
+				goalId = goalState.thistlethwaiteKociembaId(phase);
 
 			// Skip the phase if already solved
 			if (currentId == goalId) {
@@ -59,7 +59,7 @@ namespace rubik {
 				CubeState oldState = q.front();
 				q.pop();
 
-				std::vector<uint16_t> oldId = oldState.thistlethwaite_kociembaId(phase);
+				std::vector<uint16_t> oldId = oldState.thistlethwaiteKociembaId(phase);
 				int8_t& oldDir = direction[oldId];
 
 				// Explore all the legal moves for new states
@@ -70,7 +70,7 @@ namespace rubik {
 
 						CubeState newState = oldState.applyMove(move);
 
-						std::vector<uint16_t> newId = newState.thistlethwaite_kociembaId(phase);
+						std::vector<uint16_t> newId = newState.thistlethwaiteKociembaId(phase);
 						int8_t& newDir = direction[newId];
 
 						// The new state has already been seen and it has a different direction.

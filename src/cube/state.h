@@ -72,16 +72,19 @@ namespace rubik {
 		CubeState();
 		CubeState(std::vector<uint8_t>& s);
 		CubeState applyMove(const Move move) const;
-		std::vector<uint16_t> thistlethwaite_kociembaId(unsigned int phase) const;
-		std::vector<uint16_t> new_thistlethwaite_kociembaId(unsigned int phase) const;
+		std::vector<uint16_t> thistlethwaiteKociembaId(unsigned int phase) const;
 		int size() const;
 
 		bool operator<(const CubeState& other_state) const;
 		int operator[](const int i) const;
 
+		/**
+		* Show the cube state.
+		* @param state - state to show
+		*/
 		friend std::ostream& operator<<(std::ostream& s, const CubeState& state) {
 
-			for (int i = 0; i < 40; i++) {
+			for (int i = 0; i < 2 * TOTAL_NUM_CUBIES; i++) {
 				s << state[i];
 			}
 

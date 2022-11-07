@@ -22,6 +22,10 @@ namespace rubik {
 		bool isSolving();
 		void mix();
 
+		/**
+		* Show the cube state for debugging purposes
+		* @param cube - cube to show the state of
+		*/
 		friend std::ostream& operator<<(std::ostream& s, const Cube& cube) {
 
 			return s << cube._state;
