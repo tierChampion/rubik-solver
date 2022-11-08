@@ -1,6 +1,8 @@
 # Rubik Solver
 
-![rubik cube](https://github.com/tierChampion/rubik-solver/res/master/mirror_cube.png)
+![rubik cube](https://github.com/tierChampion/rubik-solver/blob/master/res/rubik_scramble.png)
+
+![mirror cube](https://github.com/tierChampion/rubik-solver/blob/master/res/mirror_scramble.png)
 
 ## Rendering
 
