@@ -1,5 +1,6 @@
 # Rubik Solver
-3D Rubik's cube with solver
+
+![rubik cube](https://github.com/tierChampion/rubik-solver/res/master/mirror_cube.png)
 
 ## Rendering
 
@@ -14,3 +15,11 @@ The original Thistlethwaite's algorithm has 4 different phases. The first phase 
 Kociemba's algorithm however only has 2 phases. The first one is basically a mix between the two first phases of the previous algorithm and considers the orientation of all the pieces. The second and last phase only allows single turns on the up and down phases and look at the permutations of the corners, edges and edges in the middle row.
 
 The problem with the Kociemba is that the number of possible positions is way too much in the second phase so tables are needed. However, by doing the third phase of the Thistlethwaite's algorithm before the second phase of the Kociemba's, no tables are needed anymore.
+
+## Parameters
+
+A few command line parameters are available with the executable that can be enumerated with the '/?' parameter. Primarely, a Mirror cube can be used instead of a Rubik's cube. A mirror cube only has a single color but the shape of each cubie is different.
+
+### Future
+
+Possible feature to add: a custom mesh could be used for the cube and be split into the tiny cubies.
