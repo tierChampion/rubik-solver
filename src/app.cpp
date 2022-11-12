@@ -6,6 +6,7 @@
 #include <glfw3.h>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
+#include <glm/glm.hpp>
 #include "helpers/helper_gl.h"
 
 #define _USE_MATH_DEFINES
@@ -40,6 +41,24 @@ const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
 const static float NEAR = 0.1f;
 const static float FAR = 100.0f;
 
+void test() {
+
+	glm::vec3 planeNorm(0, 1, 0);
+	float planeDist = 1;
+
+	glm::vec3 p0(1, 4, 0);
+	glm::vec3 p1(0, 0, -10);
+
+	glm::vec3 dir = p0 - p1;
+
+	float t = planeDist - glm::dot(planeNorm, p1);
+	t /= glm::dot(planeNorm, dir);
+
+	glm::vec3 pi = p1 + t * dir;
+
+	std::cout << pi.x << " " << pi.y << " " << pi.z << std::endl;
+}
+
 bool initGL() {
 	glewExperimental = GL_TRUE;
 	/* Initialize GLEW */
@@ -69,7 +88,7 @@ bool initGLFW() {
 }
 
 int main(int argc, char** argv) {
-
+	test();
 	std::cout << "$$$$$$$\\             $$\\       $$\\ $$\\             $$$$$$\\            $$\\	\n"
 		<< "$$  __$$\\            $$ |      \\__|$$ |           $$  __$$\\           $$ |	\n"
 		<< "$$ |  $$ | $$\\   $$\\ $$$$$$$\\  $$\\ $$ |  $$\\      $$ /  \\__| $$$$$$\   $$ |$$\\    $$\\  $$$$$$\\    $$$$$$\\	\n"

@@ -5,13 +5,4 @@
 * For each tri in the original mesh, if it intersects with the plane
 	Seperate it into three new tris, two on one side of the plane and one on the other
 * Create new triangles for the new faces created. Either have them turn around the center of the face
-	or fanning along pairs of vertices.s
-
-
-== Info ==
-Probably dont deal with texture coords and only use the mirror texture for the sliced meshes
-
-2. Add another algorithm (there appearantly exists a two part algorithm <Kociemba's algorithm>?)
-
-== Info ==
-https://en.wikipedia.org/wiki/Optimal_solutions_for_Rubik%27s_Cube
+	or fanning along pairs of vertices.

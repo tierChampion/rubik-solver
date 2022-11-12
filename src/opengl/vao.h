@@ -1,10 +1,7 @@
 #pragma once
 
-#include <glm/vec3.hpp>
-#include <glm/vec2.hpp>
+#include "../splitter/loader.h"
 #include <glew.h>
-#include <vector>
-#include <string>
 
 /**
 * Vertex array object. Stores mesh data.
