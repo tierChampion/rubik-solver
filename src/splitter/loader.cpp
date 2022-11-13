@@ -85,25 +85,23 @@ namespace splr {
 		}
 	}
 
-	void splitMeshAlongPlane(MeshData& neutralMesh) {
+	std::vector<MeshData> splitMeshAlongPlane(const glm::vec3 planeNorm,
+		const float planeDist, MeshData& neutralMesh) {
 
 		MeshData positiveMesh;
 		MeshData negativeMesh;
 
-		glm::vec3 planeNorm(0, 1, 0);
-		float planeDist = 1; // +- 1 since the cubie is of size 2
-
-		for (int v = 0; v < neutralMesh.size() / 3; v += 3) {
+		for (int v = 0; v < neutralMesh.size(); v += 3) {
 			// for each triangle
 			std::vector<uint8_t> positives;
 			std::vector<uint8_t> negatives;
 			std::vector<uint8_t> zeros;
 
 			for (int i = 0; i < 3; i++) {
-				// plug into ax + by + cz + d
-				float distance = 0;
+				// plug into ax + by + cz - d
+				float distance = glm::dot(neutralMesh.pos[v + i], planeNorm) - planeDist;
 				if (distance > 0) positives.push_back(i);
-				if (distance < 0) negatives.push_back(i);
+				else if (distance < 0) negatives.push_back(i);
 				else zeros.push_back(i);
 			}
 
@@ -123,44 +121,111 @@ namespace splr {
 				// one corner on the plane and the other two on each sides
 				// (each indicators has only one bit set and is a power of two)
 
-				glm::vec3 dir = neutralMesh.pos[positives[0]] - neutralMesh.pos[negatives[0]];
+				glm::vec3 dir = neutralMesh.pos[positives[0] + v] -
+					neutralMesh.pos[negatives[0] + v];
 
-				float t = planeDist - glm::dot(planeNorm, neutralMesh.pos[negatives[0]]);
+				float t = planeDist - glm::dot(planeNorm, neutralMesh.pos[negatives[0] + v]);
 				t /= glm::dot(planeNorm, dir);
 
 				// interpolate to point
-				glm::vec3 p = neutralMesh.pos[negatives[0]] + t * dir;
+				glm::vec3 p = neutralMesh.pos[negatives[0] + v] + t * dir;
 
-				glm::vec2 uv = neutralMesh.uvs[negatives[0]] +
-					(neutralMesh.uvs[positives[0]] - neutralMesh.uvs[negatives[0]]) *
+				glm::vec2 uv = neutralMesh.uvs[negatives[0] + v] +
+					(neutralMesh.uvs[positives[0] + v] - neutralMesh.uvs[negatives[0] + v]) *
 					t / glm::length(dir);
 
-				glm::vec3 n = neutralMesh.norms[negatives[0]] +
-					(neutralMesh.norms[positives[0]] - neutralMesh.norms[negatives[0]]) *
+				glm::vec3 n = neutralMesh.norms[negatives[0] + v] +
+					(neutralMesh.norms[positives[0] + v] - neutralMesh.norms[negatives[0] + v]) *
 					t / glm::length(dir);
 
 				// POSSIBLE ERROR, WINDING IS NOT OK
 				positiveMesh.append(Vertex(p, uv, n));
-				positiveMesh.append(neutralMesh[positives[0]]);
-				positiveMesh.append(neutralMesh[zeros[0]]);
+				positiveMesh.append(neutralMesh[positives[0] + v]);
+				positiveMesh.append(neutralMesh[zeros[0] + v]);
 
 				negativeMesh.append(Vertex(p, uv, n));
-				negativeMesh.append(neutralMesh[zeros[0]]);
-				negativeMesh.append(neutralMesh[negatives[0]]);
-
+				negativeMesh.append(neutralMesh[zeros[0] + v]);
+				negativeMesh.append(neutralMesh[negatives[0] + v]);
 			}
 			else {
 				// two corners are on one side and the other one is on the other side
-
-				int startId = positives.size() == 1 ? positives[0] : negatives[0];
+				bool positiveBias = negatives.size() == 1;
+				int startId = positiveBias ? negatives[0] : positives[0];
 
 				// p1i = +p1 to -p0 and plane
-				// p2i = +p2 to -p0 and plane
+				glm::vec3 dir = neutralMesh.pos[(startId + 1) % 3 + v] - neutralMesh.pos[startId + v];
 
-				// t1 = (p1i, p2i, -p0)
-				// t2 = (+p1, +p2, p1i)
-				// t3 = (+p2, p2i, p1i)
+				float t = planeDist - glm::dot(planeNorm, neutralMesh.pos[startId + v]);
+				t /= glm::dot(planeNorm, dir);
+
+				// interpolate to point
+				glm::vec3 p = neutralMesh.pos[startId + v] + t * dir;
+
+				glm::vec2 uv = neutralMesh.uvs[startId + v] +
+					(neutralMesh.uvs[(startId + 1) % 3 + v] - neutralMesh.uvs[startId + v]) *
+					t / glm::length(dir);
+
+				glm::vec3 n = neutralMesh.norms[startId + v] +
+					(neutralMesh.norms[(startId + 1) % 3 + v] - neutralMesh.norms[startId + v]) *
+					t / glm::length(dir);
+
+				Vertex inter1 = Vertex(p, uv, n);
+
+				// p2i = +p2 to -p0 and plane
+				dir = neutralMesh.pos[(startId + 2) % 3 + v] - neutralMesh.pos[startId + v];
+
+				t = planeDist - glm::dot(planeNorm, neutralMesh.pos[startId + v]);
+				t /= glm::dot(planeNorm, dir);
+
+				// interpolate to point
+				p = neutralMesh.pos[startId + v] + t * dir;
+
+				uv = neutralMesh.uvs[startId + v] +
+					(neutralMesh.uvs[(startId + 2) % 3 + v] - neutralMesh.uvs[startId + v]) *
+					t / glm::length(dir);
+
+				n = neutralMesh.norms[startId + v] +
+					(neutralMesh.norms[(startId + 2) % 3 + v] - neutralMesh.norms[startId + v]) *
+					t / glm::length(dir);
+
+				Vertex inter2 = Vertex(p, uv, n);
+
+				if (positiveBias) {
+					// t1 = (p1i, p2i, -p0)
+					negativeMesh.append(inter1);
+					negativeMesh.append(inter2);
+					negativeMesh.append(neutralMesh[startId + v]);
+					// t2 = (+p1, +p2, p1i)
+					positiveMesh.append(neutralMesh[(startId + 1) % 3 + v]);
+					positiveMesh.append(neutralMesh[(startId + 2) % 3 + v]);
+					positiveMesh.append(inter1);
+					// t3 = (+p2, p2i, p1i)
+					positiveMesh.append(neutralMesh[(startId + 2) % 3 + v]);
+					positiveMesh.append(inter2);
+					positiveMesh.append(inter1);
+				}
+				else {
+					// possibly change winding order
+					// t1 = (p1i, p2i, -p0)
+					positiveMesh.append(inter1);
+					positiveMesh.append(inter2);
+					positiveMesh.append(neutralMesh[startId + v]);
+					// t2 = (+p1, +p2, p1i)
+					negativeMesh.append(neutralMesh[(startId + 1) % 3 + v]);
+					negativeMesh.append(neutralMesh[(startId + 2) % 3 + v]);
+					negativeMesh.append(inter1);
+					// t3 = (+p2, p2i, p1i)
+					negativeMesh.append(neutralMesh[(startId + 2) % 3 + v]);
+					negativeMesh.append(inter2);
+					negativeMesh.append(inter1);
+				}
 			}
 		}
+
+		std::vector<MeshData> ret(2);
+		ret[0] = positiveMesh;
+		ret[1] = negativeMesh;
+
+		return ret;
 	}
 }

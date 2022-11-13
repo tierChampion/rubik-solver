@@ -39,7 +39,7 @@ namespace rubik {
 		std::vector<glm::vec3> _faceNormals;
 
 	public:
-		CubieModel(int x, int y, int z, float scaleFactor);
+		CubieModel(int x, int y, int z, float scaleFactor, bool splitted);
 		void turn(float theta, glm::vec3 axis);
 		void updateNormals();
 		glm::mat4 getModelMat();
@@ -61,10 +61,11 @@ namespace rubik {
 		int _steps;
 		int _currentStep;
 		std::vector<CubieModel> _cubies;
+		bool _splitted;
 
 	public:
-		CubeModel(bool mirror);
-		bool render(Vao vao, int programId);
+		CubeModel(bool mirror, bool splitted);
+		bool render(const std::vector<Vao>& vaos, int programId);
 		void update();
 		void turnFace(Move move);
 		void turnCube(glm::vec2 delta);

@@ -4,6 +4,7 @@
 #include <glm/vec2.hpp>
 #include <glm/glm.hpp>
 #include <vector>
+#include <iostream>
 #include <string>
 
 namespace splr {
@@ -45,5 +46,6 @@ namespace splr {
 
 	bool loadObj(const char* path, MeshData& finalMesh);
 
-	void splitMeshAlongPlane(MeshData& neutralMesh);
+	std::vector<MeshData> splitMeshAlongPlane(const glm::vec3 planeNorm, const float planeDist,
+		MeshData& neutralMesh);
 }

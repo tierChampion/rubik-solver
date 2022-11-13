@@ -41,6 +41,13 @@ const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
 const static float NEAR = 0.1f;
 const static float FAR = 100.0f;
 
+/*
+* TODO:
+* Properly split the cube into the 26 pieces
+* - Try rendering seperatly from the cube sim
+* - Do it step by step in another function
+*/
+
 void test() {
 
 	glm::vec3 planeNorm(0, 1, 0);
@@ -145,8 +152,51 @@ int main(int argc, char** argv) {
 	img.bind(0);
 
 	/* Creation of the cube and it's model. */
-	Vao vao((PROJ_PATH + "res/cubie.obj").c_str());
-	rubik::Cube cube(MIRROR);
+	std::vector<Vao> vaos;
+
+	std::vector<splr::MeshData> meshes(1);
+	splr::loadObj((PROJ_PATH + "res/shifted_cube.obj").c_str(), meshes[0]);
+
+	std::vector<glm::vec3> normals(3);
+	normals[0] = glm::vec3(1, 0, 0);
+	normals[1] = glm::vec3(0, 1, 0);
+	normals[2] = glm::vec3(0, 0, 1);
+
+	for (int i = 0; i < 3; i++) {
+
+		int size = meshes.size();
+
+		for (int j = 0; j < size; j++) {
+
+			std::vector<splr::MeshData> split = splr::splitMeshAlongPlane(normals[i], 1, meshes.front());
+
+			meshes.push_back(split[0]);
+			meshes.push_back(split[1]);
+
+			meshes.erase(meshes.begin());
+
+			splr::MeshData negative = meshes.back();
+			meshes.pop_back();
+
+			split = splr::splitMeshAlongPlane(normals[i], -1, negative);
+
+			meshes.push_back(split[0]);
+			meshes.push_back(split[1]);
+
+		}
+	}
+
+	meshes.erase(meshes.begin() + 13);
+
+	//vaos.push_back(Vao((PROJ_PATH + "res/cubie.obj").c_str()));
+
+
+	for (splr::MeshData mesh : meshes) {
+		vaos.push_back(Vao(mesh));
+	}
+
+
+	rubik::Cube cube(MIRROR, true);
 
 	/* Creation of the camera. */
 	Camera cam;
@@ -205,7 +255,7 @@ int main(int argc, char** argv) {
 	while (window->running()) {
 
 		cube.update();
-		cube.render(vao, program._programId);
+		cube.render(vaos, program._programId);
 
 		/* Mouse controls <Whole cube orientation> */
 		Mouse::update(window->getWindow());

@@ -2,7 +2,7 @@
 
 namespace rubik {
 
-	Cube::Cube(bool mirror) : _model(CubeModel(mirror)), _state() {}
+	Cube::Cube(bool mirror, bool splitted) : _model(CubeModel(mirror, splitted)), _state() {}
 
 	/**
 	* Update the orientation of the cube.
@@ -16,9 +16,9 @@ namespace rubik {
 	* @param vao - model to use
 	* @param programId - id of the program to use
 	*/
-	void Cube::render(Vao vao, int programId) {
+	void Cube::render(const std::vector<Vao>& vaos, int programId) {
 
-		_model.render(vao, programId);
+		_model.render(vaos, programId);
 	}
 
 	/**

@@ -13,9 +13,9 @@ namespace rubik {
 		bool _solving = false;
 
 	public:
-		Cube(bool mirror);
+		Cube(bool mirror, bool splitted);
 		void update();
-		void render(Vao vao, int programId);
+		void render(const std::vector<Vao>& vaos, int programId);
 		void turnFace(Move move);
 		void turnCube(glm::vec2 delta);
 		void solve();
