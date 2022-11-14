@@ -9,7 +9,7 @@ namespace rubik {
 	* the first one is similar to the Thistlethwaite while the second phase is the Kociemba's.
 	* @param problem - state of the cube to solve
 	*/
-	std::vector<Move> thistlethwaiteKociemba(CubeState problem) {
+	std::vector<Move> thistlethwaiteKociemba(CubeState problem, bool centerOrientated) {
 
 		std::vector<Move> solution;
 		CubeState currentState = problem;
@@ -118,6 +118,57 @@ namespace rubik {
 				}
 			}
 			phase++;
+		}
+
+		// If the centers have an orientation, all miss aligned centers will be a half-turn away
+		// from solved. Apply a set algorithm for all of these centers.
+		/*
+		if (centerOrientated) {
+			std::vector<Move> extra = solveCenters(currentState);
+
+			for (int i = 0; i < extra.size(); i++) {
+				solution.push_back(extra[i]);
+			}
+		}
+		*/
+
+		return solution;
+	}
+
+	/**
+	* Solve the orientation of centers using a preset algorithm.
+	* @param problem - State to solve the orientation of the centers of.
+	* @return algorithm to reach a center-solved state
+	*/
+	std::vector<Move> solveCenters(CubeState problem) {
+
+		std::vector<Move> solution;
+
+		for (int i = 0; i < NUM_CENTERS; i++) {
+			if (problem[2 * TOTAL_NUM_CUBIES + i] != 0) {
+				if (i < 4) {
+					// (?RL?2R'L') x2
+					for (int a = 0; a < 2; a++) {
+						solution.push_back(Move(i, 1));
+						solution.push_back(Move(MoveType::R1));
+						solution.push_back(Move(MoveType::L1));
+						solution.push_back(Move(i, 2));
+						solution.push_back(Move(MoveType::R3));
+						solution.push_back(Move(MoveType::L3));
+					}
+				}
+				else {
+					// (?UD?2U'D') x2
+					for (int a = 0; a < 2; a++) {
+						solution.push_back(Move(i, 1));
+						solution.push_back(Move(MoveType::U1));
+						solution.push_back(Move(MoveType::D1));
+						solution.push_back(Move(i, 2));
+						solution.push_back(Move(MoveType::U3));
+						solution.push_back(Move(MoveType::D3));
+					}
+				}
+			}
 		}
 
 		return solution;

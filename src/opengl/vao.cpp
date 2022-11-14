@@ -64,17 +64,20 @@ bool Vao::loadMesh(const splr::MeshData& mesh) {
 	GLuint vertexBuffer;
 	glGenBuffers(1, &vertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, _vertCount * sizeof(glm::vec3), &mesh.pos[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, _vertCount * sizeof(glm::vec3),
+		_vertCount ? &mesh.pos[0] : nullptr, GL_STATIC_DRAW);
 
 	GLuint uvBuffer;
 	glGenBuffers(1, &uvBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-	glBufferData(GL_ARRAY_BUFFER, _vertCount * sizeof(glm::vec2), &mesh.uvs[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, _vertCount * sizeof(glm::vec2),
+		_vertCount ? &mesh.uvs[0] : nullptr, GL_STATIC_DRAW);
 
 	GLuint normalBuffer;
 	glGenBuffers(1, &normalBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-	glBufferData(GL_ARRAY_BUFFER, _vertCount * sizeof(glm::vec3), &mesh.norms[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, _vertCount * sizeof(glm::vec3),
+		_vertCount ? &mesh.norms[0] : nullptr, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);

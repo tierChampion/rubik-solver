@@ -119,7 +119,6 @@ namespace splr {
 			}
 			else if (positives.size() == negatives.size()) {
 				// one corner on the plane and the other two on each sides
-				// (each indicators has only one bit set and is a power of two)
 
 				glm::vec3 dir = neutralMesh.pos[positives[0] + v] -
 					neutralMesh.pos[negatives[0] + v];
@@ -138,14 +137,37 @@ namespace splr {
 					(neutralMesh.norms[positives[0] + v] - neutralMesh.norms[negatives[0] + v]) *
 					t / glm::length(dir);
 
-				// POSSIBLE ERROR, WINDING IS NOT OK
-				positiveMesh.append(Vertex(p, uv, n));
-				positiveMesh.append(neutralMesh[positives[0] + v]);
-				positiveMesh.append(neutralMesh[zeros[0] + v]);
+				// Winding not ok depending on orientation
+				// neutral -> positives -> negatives
+				// else neutral -> negatives -> positives
+				bool windingOrder = ((zeros[0] + 1) % 3) == positives[0];
 
-				negativeMesh.append(Vertex(p, uv, n));
-				negativeMesh.append(neutralMesh[zeros[0] + v]);
-				negativeMesh.append(neutralMesh[negatives[0] + v]);
+				int start = zeros[0];
+
+				if (windingOrder) {
+					// 0 1+ p
+					positiveMesh.append(neutralMesh[start + v]);
+					positiveMesh.append(neutralMesh[(start + 1) % 3 + v]);
+					positiveMesh.append(Vertex(p, uv, n));
+
+					// P 2- 0
+					negativeMesh.append(Vertex(p, uv, n));
+					negativeMesh.append(neutralMesh[(start + 2) % 3 + v]);
+					negativeMesh.append(neutralMesh[start + v]);
+				}
+				else {
+					// 0 1+ p
+					negativeMesh.append(neutralMesh[start + v]);
+					negativeMesh.append(neutralMesh[(start + 1) % 3 + v]);
+					negativeMesh.append(Vertex(p, uv, n));
+
+					// P 2- 0
+					positiveMesh.append(Vertex(p, uv, n));
+					positiveMesh.append(neutralMesh[(start + 2) % 3 + v]);
+					positiveMesh.append(neutralMesh[start + v]);
+				}
+
+				std::cout << glm::dot(dir, planeNorm) << std::endl;
 			}
 			else {
 				// two corners are on one side and the other one is on the other side
@@ -196,9 +218,9 @@ namespace splr {
 					negativeMesh.append(inter2);
 					negativeMesh.append(neutralMesh[startId + v]);
 					// t2 = (+p1, +p2, p1i)
+					positiveMesh.append(inter1);
 					positiveMesh.append(neutralMesh[(startId + 1) % 3 + v]);
 					positiveMesh.append(neutralMesh[(startId + 2) % 3 + v]);
-					positiveMesh.append(inter1);
 					// t3 = (+p2, p2i, p1i)
 					positiveMesh.append(neutralMesh[(startId + 2) % 3 + v]);
 					positiveMesh.append(inter2);

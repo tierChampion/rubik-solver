@@ -62,6 +62,7 @@ namespace rubik {
 	const static unsigned int NUM_EDGES = 12;
 	const static unsigned int NUM_MIDDLE_EDGES = 4;
 	const static unsigned int NUM_CORNERS = 8;
+	const static unsigned int NUM_CENTERS = 6;
 	const static unsigned int TOTAL_NUM_CUBIES = NUM_EDGES + NUM_CORNERS;
 
 	class CubeState {
@@ -84,7 +85,7 @@ namespace rubik {
 		*/
 		friend std::ostream& operator<<(std::ostream& s, const CubeState& state) {
 
-			for (int i = 0; i < 2 * TOTAL_NUM_CUBIES; i++) {
+			for (int i = 0; i < 2 * TOTAL_NUM_CUBIES + 6; i++) {
 				s << state[i];
 			}
 

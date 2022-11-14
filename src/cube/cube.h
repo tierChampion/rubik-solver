@@ -11,6 +11,7 @@ namespace rubik {
 		CubeModel _model;
 		CubeState _state;
 		bool _solving = false;
+		bool _centerOrientation;
 
 	public:
 		Cube(bool mirror, bool splitted);

@@ -3,9 +3,9 @@
 namespace rubik {
 	CubeState::CubeState() {
 
-		_state = std::vector<uint8_t>(40, 0);
+		_state = std::vector<uint8_t>(2 * TOTAL_NUM_CUBIES + NUM_CENTERS, 0);
 
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < TOTAL_NUM_CUBIES; i++) {
 			_state[i] = i;
 		}
 	}
@@ -25,7 +25,7 @@ namespace rubik {
 
 		std::vector<uint8_t> current_state = this->_state;
 
-		while (turns--) {
+		for (int t = 0; t < turns; t++) {
 			std::vector<uint8_t> oldState = current_state;
 
 			for (int i = 0; i < 8; i++) {
@@ -74,6 +74,9 @@ namespace rubik {
 			}
 		}
 
+		current_state[2 * TOTAL_NUM_CUBIES + face] += turns;
+		current_state[2 * TOTAL_NUM_CUBIES + face] %= 4;
+
 		return current_state;
 	}
 
@@ -87,7 +90,7 @@ namespace rubik {
 		if (phase == 0) {
 
 			// Orientation of the corners
-			std::vector<uint16_t> metrics(3, 0);
+			std::vector<uint16_t> metrics(4, 0);
 			for (int e = TOTAL_NUM_CUBIES + NUM_EDGES; e < 2 * TOTAL_NUM_CUBIES; e++) {
 				metrics[0] *= 3;
 				metrics[0] += _state[e];
@@ -103,6 +106,13 @@ namespace rubik {
 			for (int e = TOTAL_NUM_CUBIES; e < TOTAL_NUM_CUBIES + NUM_EDGES - 1; e++) {
 				metrics[2] *= 2;
 				metrics[2] += _state[e];
+			}
+
+			// Rough orientation of the F, B, L and R centers. Must be a half-turn
+			// away from solved
+			for (int c = 2; c < NUM_CENTERS; c++) {
+				metrics[3] *= 2;
+				metrics[3] += _state[2 * TOTAL_NUM_CUBIES + c] & 0b1;
 			}
 
 			return metrics;
@@ -138,7 +148,7 @@ namespace rubik {
 		}
 
 		// Phase 4: Consider the positions of each cubies
-		std::vector<uint16_t> metrics(3, 0);
+		std::vector<uint16_t> metrics(4, 0);
 
 		// Corner permutations
 		for (int i = NUM_CORNERS - 1; i >= 1; i--) {
@@ -168,6 +178,12 @@ namespace rubik {
 			}
 
 			metrics[2] *= i;
+		}
+
+		// Rough orientation of the U and D centers.
+		for (int c = 0; c < 2; c++) {
+			metrics[3] *= 2;
+			metrics[3] += _state[2 * TOTAL_NUM_CUBIES + c] & 1;
 		}
 
 		return metrics;

@@ -35,6 +35,7 @@ const static char* W_TITLE = "Rubik's cube solver";
 static bool FULL_SCREEN = false;
 
 static bool MIRROR = false;
+static bool SPLIT = false;
 const static glm::vec3 CAMERA_POS(0, 0, 30);
 const static float FOV = 30.0f;
 const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
@@ -43,28 +44,8 @@ const static float FAR = 100.0f;
 
 /*
 * TODO:
-* Properly split the cube into the 26 pieces
-* - Try rendering seperatly from the cube sim
-* - Do it step by step in another function
+* Add plane face to meshes
 */
-
-void test() {
-
-	glm::vec3 planeNorm(0, 1, 0);
-	float planeDist = 1;
-
-	glm::vec3 p0(1, 4, 0);
-	glm::vec3 p1(0, 0, -10);
-
-	glm::vec3 dir = p0 - p1;
-
-	float t = planeDist - glm::dot(planeNorm, p1);
-	t /= glm::dot(planeNorm, dir);
-
-	glm::vec3 pi = p1 + t * dir;
-
-	std::cout << pi.x << " " << pi.y << " " << pi.z << std::endl;
-}
 
 bool initGL() {
 	glewExperimental = GL_TRUE;
@@ -95,7 +76,7 @@ bool initGLFW() {
 }
 
 int main(int argc, char** argv) {
-	test();
+
 	std::cout << "$$$$$$$\\             $$\\       $$\\ $$\\             $$$$$$\\            $$\\	\n"
 		<< "$$  __$$\\            $$ |      \\__|$$ |           $$  __$$\\           $$ |	\n"
 		<< "$$ |  $$ | $$\\   $$\\ $$$$$$$\\  $$\\ $$ |  $$\\      $$ /  \\__| $$$$$$\   $$ |$$\\    $$\\  $$$$$$\\    $$$$$$\\	\n"
@@ -114,6 +95,11 @@ int main(int argc, char** argv) {
 
 			if (arg == "--mirror" || arg == "-m") {
 				MIRROR = true;
+				SPLIT = false;
+			}
+			else if (arg == "--split" || arg == "-s") {
+				SPLIT = true;
+				MIRROR = false;
 			}
 			else if (arg == "--fullscreen" || arg == "-fs") {
 				FULL_SCREEN = true;
@@ -136,9 +122,30 @@ int main(int argc, char** argv) {
 
 	PROJ_PATH = PROJ_PATH.substr(0, firstLoc) + "\\RubikSolver\\";
 
-	const char* TEXTURE_PATH = MIRROR ? "res/mirror.png" : "res/cubie.png";
-	const float REFLECTIVITY = MIRROR ? 0.8f : 0.0f;
-	const float SHINE_DAMPER = MIRROR ? 5.0f : 5.0f;
+	const char* TEXTURE_PATH;
+	const char* OBJ_PATH;
+	float REFLECTIVITY;
+	float SHINE_DAMPER;
+
+	if (MIRROR) {
+		TEXTURE_PATH = "res/mirror.png";
+		OBJ_PATH = "res/cubie.obj";
+		REFLECTIVITY = 0.8f;
+		SHINE_DAMPER = 5.0f;
+	}
+	else if (SPLIT) {
+		TEXTURE_PATH = "res/split.png";
+		OBJ_PATH = "res/monkey.obj";
+		REFLECTIVITY = 1.0f;
+		SHINE_DAMPER = 5.0f;
+	}
+	else {
+		TEXTURE_PATH = "res/cubie.png";
+		OBJ_PATH = "res/cubie.obj";
+		REFLECTIVITY = 0.0f;
+		SHINE_DAMPER = 5.0f;
+	}
+
 
 	initGLFW();
 	initGL();
@@ -155,48 +162,52 @@ int main(int argc, char** argv) {
 	std::vector<Vao> vaos;
 
 	std::vector<splr::MeshData> meshes(1);
-	splr::loadObj((PROJ_PATH + "res/shifted_cube.obj").c_str(), meshes[0]);
+	splr::loadObj((PROJ_PATH + OBJ_PATH).c_str(), meshes[0]);
 
-	std::vector<glm::vec3> normals(3);
-	normals[0] = glm::vec3(1, 0, 0);
-	normals[1] = glm::vec3(0, 1, 0);
-	normals[2] = glm::vec3(0, 0, 1);
+	if (SPLIT) {
+		std::vector<glm::vec3> normals(3);
+		normals[0] = glm::vec3(1, 0, 0);
+		normals[1] = glm::vec3(0, 1, 0);
+		normals[2] = glm::vec3(0, 0, 1);
 
-	for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 3; i++) {
 
-		int size = meshes.size();
+			int size = meshes.size();
 
-		for (int j = 0; j < size; j++) {
+			for (int j = 0; j < size; j++) {
 
-			std::vector<splr::MeshData> split = splr::splitMeshAlongPlane(normals[i], 1, meshes.front());
+				// Split with the positive plane
+				std::vector<splr::MeshData> split = splr::splitMeshAlongPlane(normals[i], 1, meshes.front());
 
-			meshes.push_back(split[0]);
-			meshes.push_back(split[1]);
+				meshes.push_back(split[0]);
+				meshes.push_back(split[1]);
 
-			meshes.erase(meshes.begin());
+				meshes.erase(meshes.begin());
 
-			splr::MeshData negative = meshes.back();
-			meshes.pop_back();
+				// Split the negative part with the negative plane
+				splr::MeshData negative = meshes.back();
+				meshes.pop_back();
 
-			split = splr::splitMeshAlongPlane(normals[i], -1, negative);
+				split = splr::splitMeshAlongPlane(normals[i], -1, negative);
 
-			meshes.push_back(split[0]);
-			meshes.push_back(split[1]);
+				meshes.push_back(split[0]);
+				meshes.push_back(split[1]);
+			}
+		}
 
+		// Remove the center mesh
+		meshes.erase(meshes.begin() + 13);
+
+		for (splr::MeshData mesh : meshes) {
+			vaos.push_back(Vao(mesh));
 		}
 	}
-
-	meshes.erase(meshes.begin() + 13);
-
-	//vaos.push_back(Vao((PROJ_PATH + "res/cubie.obj").c_str()));
-
-
-	for (splr::MeshData mesh : meshes) {
-		vaos.push_back(Vao(mesh));
+	else {
+		vaos.push_back(Vao(meshes[0]));
 	}
 
+	rubik::Cube cube(MIRROR, SPLIT);
 
-	rubik::Cube cube(MIRROR, true);
 
 	/* Creation of the camera. */
 	Camera cam;

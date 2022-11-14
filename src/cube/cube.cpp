@@ -2,7 +2,7 @@
 
 namespace rubik {
 
-	Cube::Cube(bool mirror, bool splitted) : _model(CubeModel(mirror, splitted)), _state() {}
+	Cube::Cube(bool mirror, bool splitted) : _model(CubeModel(mirror, splitted)), _state(), _centerOrientation(splitted) {}
 
 	/**
 	* Update the orientation of the cube.
@@ -48,7 +48,7 @@ namespace rubik {
 
 		_solving = true;
 
-		std::queue<Move> solution = optimizeSolution(thistlethwaiteKociemba(_state));
+		std::queue<Move> solution = optimizeSolution(thistlethwaiteKociemba(_state, _centerOrientation));
 
 		// Show the solution in the terminal
 		if (!solution.empty()) {
@@ -62,6 +62,18 @@ namespace rubik {
 			}
 
 			std::cout << std::endl;
+		}
+
+		if (_centerOrientation) {
+			std::vector<Move> extra = solveCenters(_state);
+
+			if (!extra.empty()) {
+				printf("<EXTRA CENTER ORIENTATIONS> %d moves", extra.size());
+
+				for (int m = 0; m < extra.size(); m++) {
+					turnFace(extra[m]);
+				}
+			}
 		}
 
 		_solving = false;
