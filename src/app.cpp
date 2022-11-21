@@ -35,7 +35,7 @@ const static char* W_TITLE = "Rubik's cube solver";
 static bool FULL_SCREEN = false;
 
 static bool MIRROR = false;
-static bool SPLIT = false;
+static bool SPLIT = true;
 const static glm::vec3 CAMERA_POS(0, 0, 30);
 const static float FOV = 30.0f;
 const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
@@ -45,6 +45,9 @@ const static float FAR = 100.0f;
 /*
 * TODO:
 * Add plane face to meshes
+* The method used only works with convex shapes. For concave shapes
+* and thus a more general approach, delaunay triangulation would have to be used.
+* Since all tris rest on the same plane, only a 2D implementation would have to be used
 */
 
 bool initGL() {
@@ -135,9 +138,9 @@ int main(int argc, char** argv) {
 	}
 	else if (SPLIT) {
 		TEXTURE_PATH = "res/split.png";
-		OBJ_PATH = "res/monkey.obj";
-		REFLECTIVITY = 1.0f;
-		SHINE_DAMPER = 5.0f;
+		OBJ_PATH = "res/ghost_cube.obj";
+		REFLECTIVITY = 0.1f;
+		SHINE_DAMPER = 0.6f;
 	}
 	else {
 		TEXTURE_PATH = "res/cubie.png";
@@ -164,6 +167,13 @@ int main(int argc, char** argv) {
 	std::vector<splr::MeshData> meshes(1);
 	splr::loadObj((PROJ_PATH + OBJ_PATH).c_str(), meshes[0]);
 
+	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(0, 1, 0), 1)[1];
+	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(0, 0, -1), 1)[1];
+	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(-1, 0, 0), 1)[1]; // no work
+	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(1, 0, 0), 1)[0]; // no work, step through
+	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(0, 0, 1), 1)[0];
+
+	///*
 	if (SPLIT) {
 		std::vector<glm::vec3> normals(3);
 		normals[0] = glm::vec3(1, 0, 0);
@@ -177,7 +187,7 @@ int main(int argc, char** argv) {
 			for (int j = 0; j < size; j++) {
 
 				// Split with the positive plane
-				std::vector<splr::MeshData> split = splr::splitMeshAlongPlane(normals[i], 1, meshes.front());
+				std::vector<splr::MeshData> split = meshes.front().splitMeshAlongPlane(-normals[i], 1);
 
 				meshes.push_back(split[0]);
 				meshes.push_back(split[1]);
@@ -188,22 +198,20 @@ int main(int argc, char** argv) {
 				splr::MeshData negative = meshes.back();
 				meshes.pop_back();
 
-				split = splr::splitMeshAlongPlane(normals[i], -1, negative);
+				split = negative.splitMeshAlongPlane(normals[i], 1);
 
-				meshes.push_back(split[0]);
 				meshes.push_back(split[1]);
+				meshes.push_back(split[0]);
 			}
 		}
 
 		// Remove the center mesh
 		meshes.erase(meshes.begin() + 13);
-
-		for (splr::MeshData mesh : meshes) {
-			vaos.push_back(Vao(mesh));
-		}
 	}
-	else {
-		vaos.push_back(Vao(meshes[0]));
+	// */
+
+	for (splr::MeshData mesh : meshes) {
+		vaos.push_back(Vao(mesh));
 	}
 
 	rubik::Cube cube(MIRROR, SPLIT);

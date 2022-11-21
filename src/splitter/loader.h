@@ -6,8 +6,29 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 namespace splr {
+
+	inline bool approximates(const glm::vec3& v1, const glm::vec3& v2) {
+		static const float delta = 0.001f;
+
+		glm::vec3 diff = v1 - v2;
+
+		return std::abs(diff.x) < delta &&
+			std::abs(diff.y) < delta &&
+			std::abs(diff.z) < delta;
+	}
+
+	inline bool roughlyApproximates(const glm::vec3& v1, const glm::vec3& v2) {
+		static const float roughDelta = 0.1f;
+
+		glm::vec3 diff = v1 - v2;
+
+		return std::abs(diff.x) < roughDelta &&
+			std::abs(diff.y) < roughDelta &&
+			std::abs(diff.z) < roughDelta;
+	}
 
 	struct Vertex {
 
@@ -17,6 +38,14 @@ namespace splr {
 
 		Vertex(const glm::vec3 p, const glm::vec2 uv, const glm::vec3 n) : p(p), uv(uv), n(n) {}
 
+		bool operator==(const Vertex& v) const {
+
+			return approximates(this->p, v.p);
+		}
+
+		bool operator!=(const Vertex& v) const {
+			return !(*this == v);
+		}
 	};
 
 	struct MeshData {
@@ -24,8 +53,6 @@ namespace splr {
 		std::vector<glm::vec3> pos;
 		std::vector<glm::vec2> uvs;
 		std::vector<glm::vec3> norms;
-
-	public:
 
 		MeshData() {}
 
@@ -42,10 +69,29 @@ namespace splr {
 		int size() const {
 			return pos.size();
 		}
+
+		std::vector<MeshData> splitMeshAlongPlane(const glm::vec3 planeNorm, const float planeDist) const;
+
+	private:
+
+		void splitTriInHalf(MeshData& posMesh, MeshData& negMesh,
+			std::vector<Vertex>& border, const glm::vec3 planeNorm, float planeDist,
+			int v, const std::vector<uint8_t>& positives, const std::vector<uint8_t>& negatives,
+			const std::vector<uint8_t>& zeros) const;
+
+		void splitTriInThree(MeshData& posMesh, MeshData& negMesh,
+			std::vector<Vertex>& border, const glm::vec3 planeNorm, float planeDist,
+			int v, const std::vector<uint8_t>& positives, const std::vector<uint8_t>& negatives,
+			const std::vector<uint8_t>& zeros) const;
+
+		void recreateFace(MeshData& posMesh, MeshData& negMesh,
+			std::vector<Vertex>& border, const glm::vec3 planeNorm, float planeDist) const;
+
+		void buildClockwiseBorder() const;
+
 	};
 
 	bool loadObj(const char* path, MeshData& finalMesh);
 
-	std::vector<MeshData> splitMeshAlongPlane(const glm::vec3 planeNorm, const float planeDist,
-		MeshData& neutralMesh);
+	bool isCCW(const glm::vec3& p, const Vertex& v0, const Vertex& v1, const Vertex& v2);
 }

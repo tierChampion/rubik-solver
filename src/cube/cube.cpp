@@ -48,7 +48,7 @@ namespace rubik {
 
 		_solving = true;
 
-		std::queue<Move> solution = optimizeSolution(thistlethwaiteKociemba(_state, _centerOrientation));
+		std::queue<Move> solution = optimizeSolution(thistlethwaiteKociemba(_state));
 
 		// Show the solution in the terminal
 		if (!solution.empty()) {

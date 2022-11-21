@@ -9,7 +9,7 @@ namespace rubik {
 	* the first one is similar to the Thistlethwaite while the second phase is the Kociemba's.
 	* @param problem - state of the cube to solve
 	*/
-	std::vector<Move> thistlethwaiteKociemba(CubeState problem, bool centerOrientated) {
+	std::vector<Move> thistlethwaiteKociemba(CubeState problem) {
 
 		std::vector<Move> solution;
 		CubeState currentState = problem;
@@ -119,18 +119,6 @@ namespace rubik {
 			}
 			phase++;
 		}
-
-		// If the centers have an orientation, all miss aligned centers will be a half-turn away
-		// from solved. Apply a set algorithm for all of these centers.
-		/*
-		if (centerOrientated) {
-			std::vector<Move> extra = solveCenters(currentState);
-
-			for (int i = 0; i < extra.size(); i++) {
-				solution.push_back(extra[i]);
-			}
-		}
-		*/
 
 		return solution;
 	}

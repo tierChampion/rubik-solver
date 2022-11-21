@@ -85,13 +85,20 @@ namespace splr {
 		}
 	}
 
-	std::vector<MeshData> splitMeshAlongPlane(const glm::vec3 planeNorm,
-		const float planeDist, MeshData& neutralMesh) {
+	/**
+	* Seperates a mesh into two meshes with a plane.
+	* @param planeNorm - surface normal of the plane
+	* @param planeDist - distance of the plane from the origin
+	*/
+	std::vector<MeshData> MeshData::splitMeshAlongPlane(const glm::vec3 planeNorm,
+		const float planeDist) const {
 
 		MeshData positiveMesh;
 		MeshData negativeMesh;
 
-		for (int v = 0; v < neutralMesh.size(); v += 3) {
+		std::vector<Vertex> border;
+
+		for (int v = 0; v < size(); v += 3) {
 			// for each triangle
 			std::vector<uint8_t> positives;
 			std::vector<uint8_t> negatives;
@@ -99,7 +106,7 @@ namespace splr {
 
 			for (int i = 0; i < 3; i++) {
 				// plug into ax + by + cz - d
-				float distance = glm::dot(neutralMesh.pos[v + i], planeNorm) - planeDist;
+				float distance = glm::dot(pos[v + i], planeNorm) - planeDist;
 				if (distance > 0) positives.push_back(i);
 				else if (distance < 0) negatives.push_back(i);
 				else zeros.push_back(i);
@@ -107,141 +114,37 @@ namespace splr {
 
 			if (negatives.size() == 0) {
 				// add to positive mesh (no negative corners)
+
 				for (int i = 0; i < 3; i++) {
-					positiveMesh.append(neutralMesh[v + i]);
+					positiveMesh.append((*this)[v + i]);
 				}
 			}
 			else if (positives.size() == 0) {
 				// add to negative mesh (no positive corners)
 				for (int i = 0; i < 3; i++) {
-					negativeMesh.append(neutralMesh[v + i]);
+					negativeMesh.append((*this)[v + i]);
 				}
 			}
 			else if (positives.size() == negatives.size()) {
 				// one corner on the plane and the other two on each sides
 
-				glm::vec3 dir = neutralMesh.pos[positives[0] + v] -
-					neutralMesh.pos[negatives[0] + v];
+				splitTriInHalf(positiveMesh, negativeMesh, border,
+					planeNorm, planeDist, v, positives, negatives, zeros);
 
-				float t = planeDist - glm::dot(planeNorm, neutralMesh.pos[negatives[0] + v]);
-				t /= glm::dot(planeNorm, dir);
-
-				// interpolate to point
-				glm::vec3 p = neutralMesh.pos[negatives[0] + v] + t * dir;
-
-				glm::vec2 uv = neutralMesh.uvs[negatives[0] + v] +
-					(neutralMesh.uvs[positives[0] + v] - neutralMesh.uvs[negatives[0] + v]) *
-					t / glm::length(dir);
-
-				glm::vec3 n = neutralMesh.norms[negatives[0] + v] +
-					(neutralMesh.norms[positives[0] + v] - neutralMesh.norms[negatives[0] + v]) *
-					t / glm::length(dir);
-
-				// Winding not ok depending on orientation
-				// neutral -> positives -> negatives
-				// else neutral -> negatives -> positives
-				bool windingOrder = ((zeros[0] + 1) % 3) == positives[0];
-
-				int start = zeros[0];
-
-				if (windingOrder) {
-					// 0 1+ p
-					positiveMesh.append(neutralMesh[start + v]);
-					positiveMesh.append(neutralMesh[(start + 1) % 3 + v]);
-					positiveMesh.append(Vertex(p, uv, n));
-
-					// P 2- 0
-					negativeMesh.append(Vertex(p, uv, n));
-					negativeMesh.append(neutralMesh[(start + 2) % 3 + v]);
-					negativeMesh.append(neutralMesh[start + v]);
+				for (int z = 0; z < zeros.size(); z++) {
+					border.push_back((*this)[zeros[z] + v]);
 				}
-				else {
-					// 0 1+ p
-					negativeMesh.append(neutralMesh[start + v]);
-					negativeMesh.append(neutralMesh[(start + 1) % 3 + v]);
-					negativeMesh.append(Vertex(p, uv, n));
-
-					// P 2- 0
-					positiveMesh.append(Vertex(p, uv, n));
-					positiveMesh.append(neutralMesh[(start + 2) % 3 + v]);
-					positiveMesh.append(neutralMesh[start + v]);
-				}
-
-				std::cout << glm::dot(dir, planeNorm) << std::endl;
 			}
 			else {
 				// two corners are on one side and the other one is on the other side
-				bool positiveBias = negatives.size() == 1;
-				int startId = positiveBias ? negatives[0] : positives[0];
-
-				// p1i = +p1 to -p0 and plane
-				glm::vec3 dir = neutralMesh.pos[(startId + 1) % 3 + v] - neutralMesh.pos[startId + v];
-
-				float t = planeDist - glm::dot(planeNorm, neutralMesh.pos[startId + v]);
-				t /= glm::dot(planeNorm, dir);
-
-				// interpolate to point
-				glm::vec3 p = neutralMesh.pos[startId + v] + t * dir;
-
-				glm::vec2 uv = neutralMesh.uvs[startId + v] +
-					(neutralMesh.uvs[(startId + 1) % 3 + v] - neutralMesh.uvs[startId + v]) *
-					t / glm::length(dir);
-
-				glm::vec3 n = neutralMesh.norms[startId + v] +
-					(neutralMesh.norms[(startId + 1) % 3 + v] - neutralMesh.norms[startId + v]) *
-					t / glm::length(dir);
-
-				Vertex inter1 = Vertex(p, uv, n);
-
-				// p2i = +p2 to -p0 and plane
-				dir = neutralMesh.pos[(startId + 2) % 3 + v] - neutralMesh.pos[startId + v];
-
-				t = planeDist - glm::dot(planeNorm, neutralMesh.pos[startId + v]);
-				t /= glm::dot(planeNorm, dir);
-
-				// interpolate to point
-				p = neutralMesh.pos[startId + v] + t * dir;
-
-				uv = neutralMesh.uvs[startId + v] +
-					(neutralMesh.uvs[(startId + 2) % 3 + v] - neutralMesh.uvs[startId + v]) *
-					t / glm::length(dir);
-
-				n = neutralMesh.norms[startId + v] +
-					(neutralMesh.norms[(startId + 2) % 3 + v] - neutralMesh.norms[startId + v]) *
-					t / glm::length(dir);
-
-				Vertex inter2 = Vertex(p, uv, n);
-
-				if (positiveBias) {
-					// t1 = (p1i, p2i, -p0)
-					negativeMesh.append(inter1);
-					negativeMesh.append(inter2);
-					negativeMesh.append(neutralMesh[startId + v]);
-					// t2 = (+p1, +p2, p1i)
-					positiveMesh.append(inter1);
-					positiveMesh.append(neutralMesh[(startId + 1) % 3 + v]);
-					positiveMesh.append(neutralMesh[(startId + 2) % 3 + v]);
-					// t3 = (+p2, p2i, p1i)
-					positiveMesh.append(neutralMesh[(startId + 2) % 3 + v]);
-					positiveMesh.append(inter2);
-					positiveMesh.append(inter1);
-				}
-				else {
-					// possibly change winding order
-					// t1 = (p1i, p2i, -p0)
-					positiveMesh.append(inter1);
-					positiveMesh.append(inter2);
-					positiveMesh.append(neutralMesh[startId + v]);
-					// t2 = (+p1, +p2, p1i)
-					negativeMesh.append(neutralMesh[(startId + 1) % 3 + v]);
-					negativeMesh.append(neutralMesh[(startId + 2) % 3 + v]);
-					negativeMesh.append(inter1);
-					// t3 = (+p2, p2i, p1i)
-					negativeMesh.append(neutralMesh[(startId + 2) % 3 + v]);
-					negativeMesh.append(inter2);
-					negativeMesh.append(inter1);
-				}
+				splitTriInThree(positiveMesh, negativeMesh, border,
+					planeNorm, planeDist, v, positives, negatives, zeros);
 			}
+		}
+		// ear trimming to triangulate the face
+		if (!border.empty()) {
+
+			recreateFace(positiveMesh, negativeMesh, border, planeNorm, planeDist);
 		}
 
 		std::vector<MeshData> ret(2);
@@ -249,5 +152,342 @@ namespace splr {
 		ret[1] = negativeMesh;
 
 		return ret;
+	}
+
+	/**
+	* Split a tri that is perfectly in the middle of a plane
+	* @param posMesh
+	* @param negMesh
+	* @param border
+	* @param planeNorm
+	* @param planeDist
+	* @param v
+	* @param positives
+	* @param negatives
+	* @param zeros
+	*/
+	void MeshData::splitTriInHalf(MeshData& posMesh, MeshData& negMesh,
+		std::vector<Vertex>& border, const glm::vec3 planeNorm, float planeDist,
+		int v, const std::vector<uint8_t>& positives, const std::vector<uint8_t>& negatives,
+		const std::vector<uint8_t>& zeros) const {
+
+		glm::vec3 dir = pos[positives[0] + v] -
+			pos[negatives[0] + v];
+
+		float t = planeDist - glm::dot(planeNorm, pos[negatives[0] + v]);
+		t /= glm::dot(planeNorm, dir);
+
+		// interpolate to point
+		glm::vec3 p = pos[negatives[0] + v] + t * dir;
+
+		glm::vec2 uv = uvs[negatives[0] + v] +
+			(uvs[positives[0] + v] - uvs[negatives[0] + v]) *
+			t / glm::length(dir);
+
+		glm::vec3 n = norms[negatives[0] + v] +
+			(norms[positives[0] + v] - norms[negatives[0] + v]) *
+			t / glm::length(dir);
+
+		Vertex intersection = Vertex(p, uv, n);
+
+		// Winding not ok depending on orientation
+		// neutral -> positives -> negatives
+		// else neutral -> negatives -> positives
+		bool windingOrder = ((zeros[0] + 1) % 3) == positives[0];
+
+		int start = zeros[0];
+
+		if (windingOrder) {
+			// 0 1+ p
+			posMesh.append((*this)[start + v]);
+			posMesh.append((*this)[(start + 1) % 3 + v]);
+			posMesh.append(intersection);
+
+			// P 2- 0
+			negMesh.append(intersection);
+			negMesh.append((*this)[(start + 2) % 3 + v]);
+			negMesh.append((*this)[start + v]);
+		}
+		else {
+			// 0 1+ p
+			negMesh.append((*this)[start + v]);
+			negMesh.append((*this)[(start + 1) % 3 + v]);
+			negMesh.append(intersection);
+
+			// P 2- 0
+			posMesh.append(intersection);
+			posMesh.append((*this)[(start + 2) % 3 + v]);
+			posMesh.append((*this)[start + v]);
+		}
+		border.push_back(intersection);
+	}
+
+	/**
+	* Split a triangle that is intersected with a plane into three smaller triangles
+	* @param posMesh
+	* @param negMesh
+	* @param border
+	* @param planeNorm
+	* @param planeDist
+	* @param v
+	* @param positives
+	* @param negatives
+	* @param zeros
+	*/
+	void MeshData::splitTriInThree(MeshData& posMesh, MeshData& negMesh,
+		std::vector<Vertex>& border, const glm::vec3 planeNorm, float planeDist,
+		int v, const std::vector<uint8_t>& positives, const std::vector<uint8_t>& negatives,
+		const std::vector<uint8_t>& zeros) const {
+
+		bool positiveBias = negatives.size() == 1;
+		int startId = positiveBias ? negatives[0] : positives[0];
+
+		// p1i = +p1 to -p0 and plane
+		glm::vec3 dir = pos[(startId + 1) % 3 + v] - pos[startId + v];
+
+		float t = planeDist - glm::dot(planeNorm, pos[startId + v]);
+		t /= glm::dot(planeNorm, dir);
+
+		// interpolate to point
+		glm::vec3 p = pos[startId + v] + t * dir;
+
+		glm::vec2 uv = uvs[startId + v] +
+			(uvs[(startId + 1) % 3 + v] - uvs[startId + v]) *
+			t / glm::length(dir);
+
+		glm::vec3 n = norms[startId + v] +
+			(norms[(startId + 1) % 3 + v] - norms[startId + v]) *
+			t / glm::length(dir);
+
+		Vertex inter1 = Vertex(p, uv, n);
+
+		// p2i = +p2 to -p0 and plane
+		dir = pos[(startId + 2) % 3 + v] - pos[startId + v];
+
+		t = planeDist - glm::dot(planeNorm, pos[startId + v]);
+		t /= glm::dot(planeNorm, dir);
+
+		// interpolate to point
+		p = pos[startId + v] + t * dir;
+
+		uv = uvs[startId + v] +
+			(uvs[(startId + 2) % 3 + v] - uvs[startId + v]) *
+			t / glm::length(dir);
+
+		n = norms[startId + v] +
+			(norms[(startId + 2) % 3 + v] - norms[startId + v]) *
+			t / glm::length(dir);
+
+		Vertex inter2 = Vertex(p, uv, n);
+
+		if (positiveBias) {
+			// t1 = (p1i, p2i, -p0)
+			negMesh.append(inter1);
+			negMesh.append(inter2);
+			negMesh.append((*this)[startId + v]);
+			// t2 = (+p1, +p2, p1i)
+			posMesh.append(inter1);
+			posMesh.append((*this)[(startId + 1) % 3 + v]);
+			posMesh.append((*this)[(startId + 2) % 3 + v]);
+			// t3 = (+p2, p2i, p1i)
+			posMesh.append((*this)[(startId + 2) % 3 + v]);
+			posMesh.append(inter2);
+			posMesh.append(inter1);
+		}
+		else {
+			// possibly change winding order
+			// t1 = (p1i, p2i, -p0)
+			posMesh.append(inter1);
+			posMesh.append(inter2);
+			posMesh.append((*this)[startId + v]);
+			// t2 = (+p1, +p2, p1i)
+			negMesh.append((*this)[(startId + 1) % 3 + v]);
+			negMesh.append((*this)[(startId + 2) % 3 + v]);
+			negMesh.append(inter1);
+			// t3 = (+p2, p2i, p1i)
+			negMesh.append((*this)[(startId + 2) % 3 + v]);
+			negMesh.append(inter2);
+			negMesh.append(inter1);
+		}
+
+		border.push_back(inter2);
+		border.push_back(inter1);
+	}
+
+	/**
+	* Determines whether the triangle formed by three vertices is wound
+	* in a counter-clockwise order when viewed from a point.
+	*/
+	bool isCCW(const glm::vec3& p, const Vertex& v0, const Vertex& v1, const Vertex& v2) {
+
+		glm::vec3 triN = glm::cross(v1.p - v0.p,
+			v2.p - v0.p);
+
+		if (approximates(glm::vec3(0.f), triN)) return false;
+
+		triN = glm::normalize(triN);
+
+		bool otherTest = glm::dot(p - v0.p, triN) >= 0; // point faces camera
+
+		return otherTest;
+	}
+
+	/**
+	* Generate a face to close that shape that was cut with the plane
+	*
+	* TODO: Fix the orientation of the cyclic list.
+	* Sometimes when multiple cuts are made, the orientation doesn't work anymore.
+	* Maybe use convex hull
+	*
+	* @param posMesh
+	* @param negMesh
+	* @param border
+	* @param planeNorm
+	* @param planeDist
+	*/
+	void MeshData::recreateFace(MeshData& posMesh, MeshData& negMesh,
+		std::vector<Vertex>& border, const glm::vec3 planeNorm, float planeDist) const {
+
+		// find the winding of the first tri
+		std::vector<Vertex> cyclic;
+		int baseCorner = 0;
+
+		// Find the first two sides
+		while (cyclic.size() == 0) {
+			for (int i = baseCorner + 2; i < border.size() && cyclic.size() == 0; i++) {
+
+				bool isZero = (border[i] == border[baseCorner]);
+				bool isOne = (border[i] == border[baseCorner + 1]);
+
+				if (isZero || isOne) {
+
+					Vertex vMiddle = isZero ? border[baseCorner] : border[baseCorner + 1];
+					Vertex vExtrem = isZero ? border[baseCorner + 1] : border[baseCorner];
+
+					// TODO take the order needed for triN into account !
+
+					glm::vec3 triN = glm::cross(vMiddle.p - vExtrem.p,
+						border[i - 2 * (i % 2) + 1].p - vExtrem.p);
+
+					if (approximates(glm::vec3(0.f), triN)) break;
+
+					// other option: https://stackoverflow.com/questions/11938766/how-to-order-3-points-counter-clockwise-around-normal
+					// https://gamedev.stackexchange.com/questions/13229/sorting-array-of-points-in-clockwise-order
+					// https://en.wikipedia.org/wiki/Back-face_culling
+					bool triCCW = isCCW(glm::vec3(0, 0, 30), vExtrem, // should be false (not true)
+						vMiddle, border[i - 2 * (i % 2) + 1]); // point faces camera
+					bool planeCCW = glm::dot(glm::vec3(0, 0, 30) - planeNorm, planeNorm) >= 0; // plane faces camera
+
+					// -y followed by x doesnt work, why?
+
+					std::cout << triCCW << " " << planeCCW << std::endl;
+					// sometimes is weird? (not at all the plane)
+
+					// find a way to determine whether the tri is properly wound
+					///*
+					if (triCCW != planeCCW) {
+
+						cyclic.push_back(vExtrem);
+						cyclic.push_back(vMiddle);
+						cyclic.push_back(border[i - 2 * (i % 2) + 1]);
+					}
+					else {
+						cyclic.push_back(border[i - 2 * (i % 2) + 1]);
+						cyclic.push_back(vMiddle);
+						cyclic.push_back(vExtrem);
+					}
+					//*/
+					border.erase(border.begin() + (i - (i % 2)),
+						border.begin() + (i - (i % 2)) + 2);
+					border.erase(border.begin() + baseCorner, border.begin() + baseCorner + 2);
+				}
+			}
+
+			baseCorner += 2;
+			baseCorner %= border.size();
+		}
+
+		bool fullCircle = false;
+
+		while (!fullCircle) {
+
+			// for the current extremities of the cyclic list, check if a vertex is equal to it.
+			// than you found another edge that can you then know the orientation of.
+
+			int i = 0;
+			bool foundEdge = false;
+
+			while (i < border.size() && !foundEdge) {
+
+				if (border[i] == cyclic.back()) {
+					foundEdge = true;
+					// even -> +1
+					// odd -> -1
+					// -> -2 * mod + 1
+					cyclic.push_back(border[i - 2 * (i % 2) + 1]);
+
+					border.erase(border.begin() + (i - (i % 2)),
+						border.begin() + (i - (i % 2)) + 2);
+				}
+				else if (border[i] == cyclic.front()) {
+					foundEdge = true;
+					// even -> +1
+					// odd -> -1
+					// -> -2 * mod + 1
+					cyclic.emplace(cyclic.begin(), border[i - 2 * (i % 2) + 1]);
+
+					border.erase(border.begin() + (i - (i % 2)),
+						border.begin() + (i - (i % 2)) + 2);
+				}
+
+				i++;
+			}
+
+			fullCircle = border.size() == 0 || !foundEdge;
+
+			// add it manualy
+			if (!foundEdge) {
+
+				for (int j = 0; j < border.size() - 1; j++) {
+					// find the proper orientation since their is no edge pairs
+
+					bool triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0], border[j], border[j + 1]);
+					bool planeCCW = glm::dot(glm::vec3(0, 0, 30) - planeNorm, planeNorm) >= 0;
+
+					if (triCCW != planeCCW) {
+						posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
+						posMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, planeNorm));
+						posMesh.append(Vertex(border[j].p, border[j].uv, planeNorm));
+
+						negMesh.append(Vertex(border[j].p, border[j].uv, -planeNorm));
+						negMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, -planeNorm));
+						negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+					}
+					else {
+						negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+						negMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, -planeNorm));
+						negMesh.append(Vertex(border[j].p, border[j].uv, -planeNorm));
+
+						posMesh.append(Vertex(border[j].p, border[j].uv, planeNorm));
+						posMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, planeNorm));
+						posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
+					}
+				}
+			}
+		}
+
+		for (int i = 1; i < cyclic.size() - 1; i++) {
+
+			glm::vec3 triN = glm::normalize(glm::cross(cyclic[i].p - cyclic[0].p,
+				cyclic[i + 1].p - cyclic[0].p));
+
+			posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
+			posMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
+			posMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, planeNorm));
+
+			negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+			negMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, -planeNorm));
+			negMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, -planeNorm));
+		}
 	}
 }
