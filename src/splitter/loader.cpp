@@ -323,8 +323,6 @@ namespace splr {
 		glm::vec3 triN = glm::cross(v1.p - v0.p,
 			v2.p - v0.p);
 
-		if (approximates(glm::vec3(0.f), triN)) return false;
-
 		triN = glm::normalize(triN);
 
 		bool otherTest = glm::dot(p - v0.p, triN) >= 0; // point faces camera
@@ -348,6 +346,39 @@ namespace splr {
 	void MeshData::recreateFace(MeshData& posMesh, MeshData& negMesh,
 		std::vector<Vertex>& border, const glm::vec3 planeNorm, float planeDist) const {
 
+		// find the winding of the first tri
+		std::vector<Vertex> cyclic = buildCyclicBorder(posMesh, negMesh, border, planeNorm, planeDist);
+
+		for (int i = 1; i < cyclic.size() - 1; i++) {
+
+			bool triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0], // doesnt return the right thing?
+				cyclic[i], cyclic[i + 1]); // point faces camera
+			bool planeCCW = glm::dot(glm::vec3(0, 0, 30) - planeNorm, planeNorm) >= 0;
+
+			if (triCCW != planeCCW) {
+
+				posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
+				posMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
+				posMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, planeNorm));
+
+				negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+				negMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, -planeNorm));
+				negMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, -planeNorm));
+			}
+			else {
+				posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
+				posMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, planeNorm));
+				posMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
+
+				negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+				negMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, -planeNorm));
+				negMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, -planeNorm));
+			}
+		}
+	}
+
+	std::vector<Vertex> MeshData::buildCyclicBorder(MeshData& posMesh, MeshData& negMesh, std::vector<Vertex>& border,
+		const glm::vec3& planeNorm, float planeDist) const {
 		// find the winding of the first tri
 		std::vector<Vertex> cyclic;
 		int baseCorner = 0;
@@ -374,7 +405,7 @@ namespace splr {
 					// other option: https://stackoverflow.com/questions/11938766/how-to-order-3-points-counter-clockwise-around-normal
 					// https://gamedev.stackexchange.com/questions/13229/sorting-array-of-points-in-clockwise-order
 					// https://en.wikipedia.org/wiki/Back-face_culling
-					bool triCCW = isCCW(glm::vec3(0, 0, 30), vExtrem, // should be false (not true)
+					bool triCCW = isCCW(glm::vec3(0, 0, 30), vExtrem, // doesnt return the right thing?
 						vMiddle, border[i - 2 * (i % 2) + 1]); // point faces camera
 					bool planeCCW = glm::dot(glm::vec3(0, 0, 30) - planeNorm, planeNorm) >= 0; // plane faces camera
 
@@ -383,8 +414,6 @@ namespace splr {
 					std::cout << triCCW << " " << planeCCW << std::endl;
 					// sometimes is weird? (not at all the plane)
 
-					// find a way to determine whether the tri is properly wound
-					///*
 					if (triCCW != planeCCW) {
 
 						cyclic.push_back(vExtrem);
@@ -396,7 +425,6 @@ namespace splr {
 						cyclic.push_back(vMiddle);
 						cyclic.push_back(vExtrem);
 					}
-					//*/
 					border.erase(border.begin() + (i - (i % 2)),
 						border.begin() + (i - (i % 2)) + 2);
 					border.erase(border.begin() + baseCorner, border.begin() + baseCorner + 2);
@@ -429,17 +457,6 @@ namespace splr {
 					border.erase(border.begin() + (i - (i % 2)),
 						border.begin() + (i - (i % 2)) + 2);
 				}
-				else if (border[i] == cyclic.front()) {
-					foundEdge = true;
-					// even -> +1
-					// odd -> -1
-					// -> -2 * mod + 1
-					cyclic.emplace(cyclic.begin(), border[i - 2 * (i % 2) + 1]);
-
-					border.erase(border.begin() + (i - (i % 2)),
-						border.begin() + (i - (i % 2)) + 2);
-				}
-
 				i++;
 			}
 
@@ -451,43 +468,34 @@ namespace splr {
 				for (int j = 0; j < border.size() - 1; j++) {
 					// find the proper orientation since their is no edge pairs
 
-					bool triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0], border[j], border[j + 1]);
+					bool triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0], // doesnt return the right thing?
+						border[j], border[j + 1]); // point faces camera
 					bool planeCCW = glm::dot(glm::vec3(0, 0, 30) - planeNorm, planeNorm) >= 0;
 
 					if (triCCW != planeCCW) {
 						posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
-						posMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, planeNorm));
 						posMesh.append(Vertex(border[j].p, border[j].uv, planeNorm));
+						posMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, planeNorm));
 
-						negMesh.append(Vertex(border[j].p, border[j].uv, -planeNorm));
-						negMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, -planeNorm));
 						negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+						negMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, -planeNorm));
+						negMesh.append(Vertex(border[j].p, border[j].uv, -planeNorm));
+
 					}
 					else {
-						negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
-						negMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, -planeNorm));
-						negMesh.append(Vertex(border[j].p, border[j].uv, -planeNorm));
-
-						posMesh.append(Vertex(border[j].p, border[j].uv, planeNorm));
-						posMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, planeNorm));
 						posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
+						posMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, planeNorm));
+						posMesh.append(Vertex(border[j].p, border[j].uv, planeNorm));
+
+						negMesh.append(Vertex(border[j].p, border[j].uv, -planeNorm));
+						negMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, -planeNorm));
+						negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+
 					}
 				}
 			}
 		}
 
-		for (int i = 1; i < cyclic.size() - 1; i++) {
-
-			glm::vec3 triN = glm::normalize(glm::cross(cyclic[i].p - cyclic[0].p,
-				cyclic[i + 1].p - cyclic[0].p));
-
-			posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
-			posMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
-			posMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, planeNorm));
-
-			negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
-			negMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, -planeNorm));
-			negMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, -planeNorm));
-		}
+		return cyclic;
 	}
 }

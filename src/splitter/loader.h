@@ -87,7 +87,8 @@ namespace splr {
 		void recreateFace(MeshData& posMesh, MeshData& negMesh,
 			std::vector<Vertex>& border, const glm::vec3 planeNorm, float planeDist) const;
 
-		void buildClockwiseBorder() const;
+		std::vector<Vertex> buildCyclicBorder(MeshData& posMesh, MeshData& negMesh, std::vector<Vertex>& border,
+			const glm::vec3& planeNorm, float planeDist) const;
 
 	};
 
