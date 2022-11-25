@@ -3,6 +3,8 @@
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 #include <glm/glm.hpp>
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <vector>
 #include <iostream>
 #include <string>
@@ -11,23 +13,13 @@
 namespace splr {
 
 	inline bool approximates(const glm::vec3& v1, const glm::vec3& v2) {
-		static const float delta = 0.001f;
+		static const float delta = 0.002f;
 
 		glm::vec3 diff = v1 - v2;
 
 		return std::abs(diff.x) < delta &&
 			std::abs(diff.y) < delta &&
 			std::abs(diff.z) < delta;
-	}
-
-	inline bool roughlyApproximates(const glm::vec3& v1, const glm::vec3& v2) {
-		static const float roughDelta = 0.1f;
-
-		glm::vec3 diff = v1 - v2;
-
-		return std::abs(diff.x) < roughDelta &&
-			std::abs(diff.y) < roughDelta &&
-			std::abs(diff.z) < roughDelta;
 	}
 
 	struct Vertex {
@@ -70,6 +62,7 @@ namespace splr {
 			return pos.size();
 		}
 
+		// TODO: PROBABLY MOVE THIS INSIDE ANOTHER CLASS AND ANOTHER FILE
 		std::vector<MeshData> splitMeshAlongPlane(const glm::vec3 planeNorm, const float planeDist) const;
 
 	private:
@@ -88,11 +81,21 @@ namespace splr {
 			std::vector<Vertex>& border, const glm::vec3 planeNorm, float planeDist) const;
 
 		std::vector<Vertex> buildCyclicBorder(MeshData& posMesh, MeshData& negMesh, std::vector<Vertex>& border,
-			const glm::vec3& planeNorm, float planeDist) const;
+			const glm::vec3 planeNorm, int desiredWinding) const;
+
+		void earTrimming(MeshData& posMesh, MeshData& negMesh, std::vector<Vertex>& cyclic,
+			const glm::vec3 planeNorm, int desiredWinding) const;
+
+		void findWinding(MeshData& posMesh, MeshData& negMesh, std::vector<Vertex>& border,
+			std::vector<Vertex>& cyclic, const glm::vec3 planeNorm, int planeAxis, int desiredWinding) const;
 
 	};
 
 	bool loadObj(const char* path, MeshData& finalMesh);
 
-	bool isCCW(const glm::vec3& p, const Vertex& v0, const Vertex& v1, const Vertex& v2);
+	int isCCW(const glm::vec3& p, const Vertex& v0, const Vertex& v1, const Vertex& v2);
+
+	bool isEar(const std::vector<Vertex>& cyclic, int earId, int planeAxis, int desiredWinding);
+
+	double triArea(const glm::vec3 p0, const glm::vec3 p1, const glm::vec3 p2, int x, int y);
 }

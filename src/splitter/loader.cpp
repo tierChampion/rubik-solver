@@ -20,7 +20,7 @@ namespace splr {
 		FILE* file;
 		fopen_s(&file, path, "r");
 		if (file == NULL) {
-			printf("Problem while opening the file! ");
+			std::cerr << "ERROR: The given OBJ file cannot be found." << std::endl;
 			return false;
 		}
 
@@ -59,7 +59,8 @@ namespace splr {
 					&vertexIndex[1], &uvIndex[1], &normalIndex[1],
 					&vertexIndex[2], &uvIndex[2], &normalIndex[2]);
 				if (matches != 9) {
-					printf("Problem while reading the file! \n");
+					std::cerr << "ERROR: Check if the UVs and the Normals "
+						<< "of the mesh are defined in the OBJ file." << std::endl;
 					return false;
 				}
 
@@ -221,9 +222,9 @@ namespace splr {
 		* When the triangle is very slim and there is only one intersection.
 		* TODO won't this break the pairs of edges?
 		*/
-		if (intersection != (*this)[zeros[0] + v]) {
+		if (intersection != (*this)[start + v]) {
 			border.push_back(intersection);
-			border.push_back((*this)[zeros[0] + v]);
+			border.push_back((*this)[start + v]);
 		}
 	}
 
@@ -328,45 +329,53 @@ namespace splr {
 	/**
 	* Determines whether the triangle formed by three vertices is wound
 	* in a counter-clockwise order when viewed from a point.
+	* @param p - viewpoint
+	* @param v0 - Presumably most clockwise vertex
+	* @param v1 - Middle vertex
+	* @param v2 - Presumably most counter-clockwise vertex
+	* @return whether the triangle is ccw
 	*/
-	bool isCCW(const glm::vec3& p, const Vertex& v0, const Vertex& v1, const Vertex& v2) {
+	int isCCW(const glm::vec3& p, const Vertex& v0, const Vertex& v1, const Vertex& v2) {
 
 		glm::vec3 triN = glm::cross(v1.p - v0.p,
 			v2.p - v0.p);
 
+		if (approximates(glm::vec3(0.f), triN)) return 0;
+
 		triN = glm::normalize(triN);
 
-		bool otherTest = glm::dot(p - v0.p, triN) >= 0; // point faces camera
+		int otherTest = glm::dot(p - v0.p, triN) >= 0 ? 1 : 2; // point faces camera
 
 		return otherTest;
 	}
 
 	/**
-	* Generate a face to close that shape that was cut with the plane
-	*
-	* TODO: Fix the orientation of the cyclic list.
-	* Sometimes when multiple cuts are made, the orientation doesn't work anymore.
-	* Maybe use convex hull
-	*
-	* @param posMesh
-	* @param negMesh
-	* @param border
-	* @param planeNorm
-	* @param planeDist
+	* Calculate the shape to close the mesh cut by the plane.
+	* @param posMesh - mesh on the positive side of the slicing plane
+	* @param negMesh - mesh on the negative side of the slicing plane
+	* @param border - list of pairs of neighbouring vertices in the border
+	* @param planeNorm - normal of the slicing plane
+	* @param planeDist - distance of the plane to the origin
 	*/
 	void MeshData::recreateFace(MeshData& posMesh, MeshData& negMesh,
 		std::vector<Vertex>& border, const glm::vec3 planeNorm, float planeDist) const {
 
 		// find the winding of the first tri
-		std::vector<Vertex> cyclic = buildCyclicBorder(posMesh, negMesh, border, planeNorm, planeDist);
+		int desiredWinding = (glm::dot(glm::vec3(0, 0, 30) - planeNorm, -planeNorm) >= 0) ? 1 : 2;
 
+		// TODO fix winding bugs
+		std::vector<Vertex> cyclic = buildCyclicBorder(posMesh, negMesh, border, planeNorm, desiredWinding);
+
+		// TODO (make sure it works with proper winding)
+		//earTrimming(posMesh, negMesh, cyclic, planeNorm, desiredWinding);
+
+		///*
 		for (int i = 1; i < cyclic.size() - 1; i++) {
 
-			bool triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0], // doesnt return the right thing?
+			int triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0],
 				cyclic[i], cyclic[i + 1]); // point faces camera
-			bool planeCCW = glm::dot(glm::vec3(0, 0, 30) - planeNorm, planeNorm) >= 0;
 
-			if (triCCW != planeCCW) {
+			if (triCCW == desiredWinding) {
 
 				posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
 				posMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
@@ -386,77 +395,31 @@ namespace splr {
 				negMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, -planeNorm));
 			}
 		}
+		//*/
 	}
 
+	/**
+	* Create a cyclic list of the perimeter of the border.
+	*
+	* TODO: This doesn't work correctly if the first vertex is concave.
+	* trying to find a convex vert to calculate the winding
+	*
+	* @param posMesh - mesh on the positive side of the slicing plane
+	* @param negMesh - mesh on the negative side of the slicing plane
+	* @param border - list of pairs of neighbouring vertices in the border
+	* @param planeNorm - normal of the slicing plane
+	* @param desiredWinding - orientation of the list. true for ccw and false for cw
+	* @return list of vertices ordered in the desired winding
+	*/
 	std::vector<Vertex> MeshData::buildCyclicBorder(MeshData& posMesh, MeshData& negMesh, std::vector<Vertex>& border,
-		const glm::vec3& planeNorm, float planeDist) const {
+		const glm::vec3 planeNorm, int desiredWinding) const {
+
 		// find the winding of the first tri
+		int planeAxis = (planeNorm.y != 0) * 1 + (planeNorm.z != 0) * 2;
 		std::vector<Vertex> cyclic;
-		int baseCorner = 0;
 
-		// Find the first two sides
-		while (cyclic.size() == 0) {
-
-			std::cout << border[baseCorner].p.x << " " <<
-				border[baseCorner].p.y << " " <<
-				border[baseCorner].p.z << std::endl;
-
-			for (int i = baseCorner + 2; i < border.size() && cyclic.size() == 0; i++) {
-
-				bool isZero = (border[i] == border[baseCorner]);
-				bool isOne = (border[i] == border[baseCorner + 1]);
-
-				std::cout << "\t" << border[i].p.x << " " <<
-					border[i].p.y << " " <<
-					border[i].p.z << std::endl;
-
-				if (isZero || isOne) {
-
-					Vertex vMiddle = isZero ? border[baseCorner] : border[baseCorner + 1];
-					Vertex vExtrem = isZero ? border[baseCorner + 1] : border[baseCorner];
-
-					// TODO take the order needed for triN into account !
-
-					glm::vec3 triN = glm::cross(vMiddle.p - vExtrem.p,
-						border[i - 2 * (i % 2) + 1].p - vExtrem.p);
-
-					if (approximates(glm::vec3(0.f), triN)) {
-						std::cout << "flat!" << std::endl;
-						break;
-					}
-
-					// other option: https://stackoverflow.com/questions/11938766/how-to-order-3-points-counter-clockwise-around-normal
-					// https://gamedev.stackexchange.com/questions/13229/sorting-array-of-points-in-clockwise-order
-					// https://en.wikipedia.org/wiki/Back-face_culling
-					bool triCCW = isCCW(glm::vec3(0, 0, 30), vExtrem, // doesnt return the right thing?
-						vMiddle, border[i - 2 * (i % 2) + 1]); // point faces camera
-					bool planeCCW = glm::dot(glm::vec3(0, 0, 30) - planeNorm, planeNorm) >= 0; // plane faces camera
-
-					// -y followed by x doesnt work, why?
-
-					std::cout << triCCW << " " << planeCCW << std::endl;
-					// sometimes is weird? (not at all the plane)
-
-					if (triCCW != planeCCW) {
-
-						cyclic.push_back(vExtrem);
-						cyclic.push_back(vMiddle);
-						cyclic.push_back(border[i - 2 * (i % 2) + 1]);
-					}
-					else {
-						cyclic.push_back(border[i - 2 * (i % 2) + 1]);
-						cyclic.push_back(vMiddle);
-						cyclic.push_back(vExtrem);
-					}
-					border.erase(border.begin() + (i - (i % 2)),
-						border.begin() + (i - (i % 2)) + 2);
-					border.erase(border.begin() + baseCorner, border.begin() + baseCorner + 2);
-				}
-			}
-
-			baseCorner += 2;
-			baseCorner %= border.size();
-		}
+		// To test with other than shifted cube, cyclic is initialized as empty
+		findWinding(posMesh, negMesh, border, cyclic, planeNorm, planeAxis, desiredWinding);
 
 		bool fullCircle = false;
 
@@ -489,13 +452,11 @@ namespace splr {
 			if (!foundEdge) {
 
 				for (int j = 0; j < border.size() - 1; j++) {
-					// find the proper orientation since their is no edge pairs
 
-					bool triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0], // doesnt return the right thing?
+					int triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0],
 						border[j], border[j + 1]); // point faces camera
-					bool planeCCW = glm::dot(glm::vec3(0, 0, 30) - planeNorm, planeNorm) >= 0;
 
-					if (triCCW != planeCCW) {
+					if (triCCW == desiredWinding) {
 						posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
 						posMesh.append(Vertex(border[j].p, border[j].uv, planeNorm));
 						posMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, planeNorm));
@@ -513,12 +474,243 @@ namespace splr {
 						negMesh.append(Vertex(border[j].p, border[j].uv, -planeNorm));
 						negMesh.append(Vertex(border[j + 1].p, border[j + 1].uv, -planeNorm));
 						negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
-
 					}
 				}
 			}
 		}
 
 		return cyclic;
+	}
+
+	/**
+	* TODO for the egg mesh, some verts appear an odd number of times
+	*/
+	void MeshData::findWinding(MeshData& posMesh, MeshData& negMesh, std::vector<Vertex>& border,
+		std::vector<Vertex>& cyclic, const glm::vec3 planeNorm, int planeAxis, int desiredWinding) const {
+
+		int x = (planeAxis + 1) % 3;
+		int y = (planeAxis + 2) % 3;
+
+		int convex = 0;
+
+		float maxX = border[0].p[x];
+		float maxY = border[0].p[y];
+
+		for (int i = 1; i < border.size(); i++) {
+
+			if (border[i].p[x] > maxX) {
+				convex = i;
+				maxX = border[i].p[x];
+				maxY = border[i].p[y];
+			}
+			else if (border[i].p[x] == maxX) {
+				if (border[i].p[y] > maxY) {
+					convex = i;
+					maxX = border[i].p[x];
+					maxY = border[i].p[y];
+				}
+			}
+		}
+
+		int neighbour = convex - 2 * (convex % 2) + 1;
+
+		// TODO I need to start at 0 for certain meshes, but why??
+		for (int i = 0; i < border.size() && cyclic.size() == 0; i++) {
+
+			bool isZero = (border[i] == border[convex]) && i != convex;
+
+			if (isZero) {
+
+				Vertex vMiddle = border[convex];
+				Vertex vExtrem = border[neighbour];
+
+				// other option: https://stackoverflow.com/questions/11938766/how-to-order-3-points-counter-clockwise-around-normal
+				// https://gamedev.stackexchange.com/questions/13229/sorting-array-of-points-in-clockwise-order
+				// https://en.wikipedia.org/wiki/Back-face_culling
+				int triCCW = isCCW(glm::vec3(0, 0, 30), vExtrem, // doesnt return the right thing?
+					vMiddle, border[i - 2 * (i % 2) + 1]); // point faces camera
+
+				if (triCCW == desiredWinding) {
+
+					cyclic.push_back(vExtrem);
+					cyclic.push_back(vMiddle);
+					cyclic.push_back(border[i - 2 * (i % 2) + 1]);
+				}
+				else {
+					cyclic.push_back(border[i - 2 * (i % 2) + 1]);
+					cyclic.push_back(vMiddle);
+					cyclic.push_back(vExtrem);
+				}
+
+				// always delete what comes later in the vector first
+				if (i > convex) {
+					border.erase(border.begin() + (i - (i % 2)),
+						border.begin() + (i - (i % 2)) + 2);
+					border.erase(border.begin() + std::min(convex, neighbour),
+						border.begin() + std::min(convex, neighbour) + 2);
+				}
+				else {
+					border.erase(border.begin() + std::min(convex, neighbour),
+						border.begin() + std::min(convex, neighbour) + 2);
+					border.erase(border.begin() + (i - (i % 2)),
+						border.begin() + (i - (i % 2)) + 2);
+				}
+			}
+		}
+	}
+
+	/**
+	* Calculate the area of the triangle with the given vertices
+	* @param x - index of the x dimension to use
+	* @param y - index of the y dimension to use
+	*/
+	double triArea(const glm::vec3 p0, const glm::vec3 p1, const glm::vec3 p2, int x, int y) {
+
+		return (std::fabs(p0[x] * (p2[y] - p1[y]) +
+			p1[x] * (p2[y] - p0[y]) +
+			p2[x] * (p1[y] - p0[y])));
+	}
+
+	/// EXPERIMENTAL FOR NOW /// 
+
+	/**
+	* Determine whether the vertex constitutes an ear.
+	* An ear is a convex vertex where the triangle with its neighbouring
+	* vertices contains no other points.
+	* @param cyclic - Ordered list of the vertices
+	* @param earId - index of the ear to check
+	* @param desiredWinding - orientation of a tri with a concave vertex
+	*/
+	bool isEar(const std::vector<Vertex>& cyclic, int earId, int plane, int desiredWinding) {
+
+		int vPrev = (earId + cyclic.size() - 1) % cyclic.size();
+		int vNext = (earId + 1) % cyclic.size();
+
+		int x = (plane + 1) % 3;
+		int y = (x + 1) % 3;
+
+		// TODO With very thin tris, the area is almost 0 and the cross product is very small
+		// this makes determining if it is an ear very difficult
+		// also there sometimes seems to be duplicate vertices which breaks this
+
+		double insideArea = triArea(cyclic[vPrev].p, cyclic[earId].p, cyclic[vNext].p, x, y);
+
+		if (insideArea == 0) {
+			return true;
+		}
+
+		int isConvex = isCCW(glm::vec3(0, 0, 30), cyclic[vPrev], cyclic[earId], cyclic[vNext]);
+
+		if (isConvex == 0)
+			return true;
+
+		if (isConvex != desiredWinding)
+			return false;
+
+		// TODO //
+
+		// determine the used dimensions
+		// Calculate the total area of the ear triangle
+
+		// Calculate the sum of the three small triangles for each vertices.
+		// If the sum is equal to the total, the point is inside the triangle
+		// thus, we don't have an ear
+
+		for (int i = 0; i < cyclic.size() - 3; i++) {
+
+			int index = (i + vNext) % cyclic.size();
+
+			// Calculate the sum of the three small triangles for each vertices.
+			double area1 = triArea(cyclic[index].p, cyclic[earId].p, cyclic[vNext].p, x, y),
+				area2 = triArea(cyclic[vPrev].p, cyclic[index].p, cyclic[vNext].p, x, y),
+				area3 = triArea(cyclic[vPrev].p, cyclic[earId].p, cyclic[index].p, x, y);
+
+			// If the sum is equal to the total, the point is inside the triangle
+			// thus, we don't have an ear
+			if (area1 + area2 + area3 == insideArea) return false;
+		}
+
+		// TODO //
+
+		return true;
+	}
+
+	/**
+	* TODO, doesnt work with most meshes.
+	* They end up with more than 4 tris that are all concave for some reason.
+	* Maybe the check for convexity is wrong.
+	*
+	* Possible solution => keep a list of convex vertices and update it every time a tri is removed
+	* for all the affected verts. Then pick from these vertex to trimm.
+	*/
+	void MeshData::earTrimming(MeshData& posMesh, MeshData& negMesh, std::vector<Vertex>& cyclic,
+		const glm::vec3 planeNorm, int desiredWinding) const {
+
+		// TODO //
+		// Is this corner an ear?
+		//	- Convex corner (orientation of the tri is not the desired orientation)
+		//	- No vertices are inside the triangle (look at area of small tris)
+		// Form a tri with the ear and remove the ear.
+		//
+
+		// Make it does what it needs to do.
+		int planeAxis = (planeNorm.y != 0) * 1 + (planeNorm.z != 0) * 2;
+
+		while (cyclic.size() >= 3) {
+
+			bool foundEar = false;
+			int i = 0;
+
+			while (!foundEar && i < cyclic.size()) {
+				// doesnt work correctly
+				if (isEar(cyclic, i, planeAxis, desiredWinding)) {
+
+					foundEar = true;
+
+					// add to meshes (TODO fix normals)
+					posMesh.append(cyclic[(i + cyclic.size() - 1) % cyclic.size()]);
+					posMesh.append(cyclic[i]);
+					posMesh.append(cyclic[(i + 1) % cyclic.size()]);
+
+					negMesh.append(cyclic[(i + 1) % cyclic.size()]);
+					negMesh.append(cyclic[i]);
+					negMesh.append(cyclic[(i + cyclic.size() - 1) % cyclic.size()]);
+
+					// remove from list
+
+					cyclic.erase(cyclic.begin() + i, cyclic.begin() + i + 1);
+				}
+
+				i++;
+				std::cout << cyclic.size() << std::endl;
+			}
+
+			if (cyclic.size() == 3) {
+				int triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0], // doesnt return the right thing?
+					cyclic[1], cyclic[2]); // point faces camera
+
+				if (triCCW == desiredWinding) {
+					posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
+					posMesh.append(Vertex(cyclic[1].p, cyclic[1].uv, planeNorm));
+					posMesh.append(Vertex(cyclic[2].p, cyclic[2].uv, planeNorm));
+
+					negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+					negMesh.append(Vertex(cyclic[2].p, cyclic[2].uv, -planeNorm));
+					negMesh.append(Vertex(cyclic[1].p, cyclic[1].uv, -planeNorm));
+
+				}
+				else {
+					posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
+					posMesh.append(Vertex(cyclic[2].p, cyclic[2].uv, planeNorm));
+					posMesh.append(Vertex(cyclic[1].p, cyclic[1].uv, planeNorm));
+
+					negMesh.append(Vertex(cyclic[1].p, cyclic[1].uv, -planeNorm));
+					negMesh.append(Vertex(cyclic[2].p, cyclic[2].uv, -planeNorm));
+					negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+				}
+
+				cyclic.clear();
+			}
+		}
 	}
 }

@@ -52,7 +52,7 @@ namespace rubik {
 
 		// Show the solution in the terminal
 		if (!solution.empty()) {
-			printf("<SOLUTION> %d moves: ", solution.size());
+			std::cout << "<SOLUTION> " << solution.size() << " moves: ";
 
 			while (solution.size() > 0) {
 				Move move = solution.front();
@@ -68,7 +68,7 @@ namespace rubik {
 			std::vector<Move> extra = solveCenters(_state);
 
 			if (!extra.empty()) {
-				printf("<EXTRA CENTER ORIENTATIONS> %d moves", extra.size());
+				std::cout << "EXTRA CENTER ORIENTATIONS> " << extra.size() << " moves" << std::endl;
 
 				for (int m = 0; m < extra.size(); m++) {
 					turnFace(extra[m]);
