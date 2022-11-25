@@ -131,9 +131,6 @@ namespace splr {
 				splitTriInHalf(positiveMesh, negativeMesh, border,
 					planeNorm, planeDist, v, positives, negatives, zeros);
 
-				for (int z = 0; z < zeros.size(); z++) {
-					border.push_back((*this)[zeros[z] + v]);
-				}
 			}
 			else {
 				// two corners are on one side and the other one is on the other side
@@ -219,7 +216,15 @@ namespace splr {
 			posMesh.append((*this)[(start + 2) % 3 + v]);
 			posMesh.append((*this)[start + v]);
 		}
-		border.push_back(intersection);
+
+		/*
+		* When the triangle is very slim and there is only one intersection.
+		* TODO won't this break the pairs of edges?
+		*/
+		if (intersection != (*this)[zeros[0] + v]) {
+			border.push_back(intersection);
+			border.push_back((*this)[zeros[0] + v]);
+		}
 	}
 
 	/**
@@ -310,8 +315,14 @@ namespace splr {
 			negMesh.append(inter1);
 		}
 
-		border.push_back(inter2);
-		border.push_back(inter1);
+		/*
+		* When the triangle is very slim and there is only one intersection.
+		* TODO won't this break the pairs of edges?
+		*/
+		if (inter1 != inter2) {
+			border.push_back(inter2);
+			border.push_back(inter1);
+		}
 	}
 
 	/**
@@ -385,10 +396,19 @@ namespace splr {
 
 		// Find the first two sides
 		while (cyclic.size() == 0) {
+
+			std::cout << border[baseCorner].p.x << " " <<
+				border[baseCorner].p.y << " " <<
+				border[baseCorner].p.z << std::endl;
+
 			for (int i = baseCorner + 2; i < border.size() && cyclic.size() == 0; i++) {
 
 				bool isZero = (border[i] == border[baseCorner]);
 				bool isOne = (border[i] == border[baseCorner + 1]);
+
+				std::cout << "\t" << border[i].p.x << " " <<
+					border[i].p.y << " " <<
+					border[i].p.z << std::endl;
 
 				if (isZero || isOne) {
 
@@ -400,7 +420,10 @@ namespace splr {
 					glm::vec3 triN = glm::cross(vMiddle.p - vExtrem.p,
 						border[i - 2 * (i % 2) + 1].p - vExtrem.p);
 
-					if (approximates(glm::vec3(0.f), triN)) break;
+					if (approximates(glm::vec3(0.f), triN)) {
+						std::cout << "flat!" << std::endl;
+						break;
+					}
 
 					// other option: https://stackoverflow.com/questions/11938766/how-to-order-3-points-counter-clockwise-around-normal
 					// https://gamedev.stackexchange.com/questions/13229/sorting-array-of-points-in-clockwise-order

@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
 	}
 	else if (SPLIT) {
 		TEXTURE_PATH = "res/split.png";
-		OBJ_PATH = "res/weird_cube.obj";
+		OBJ_PATH = "res/ghost_cube.obj"; // egg doesnt work
 		REFLECTIVITY = 0.1f;
 		SHINE_DAMPER = 0.6f;
 	}
@@ -166,9 +166,6 @@ int main(int argc, char** argv) {
 
 	std::vector<splr::MeshData> meshes(1);
 	splr::loadObj((PROJ_PATH + OBJ_PATH).c_str(), meshes[0]);
-
-	// x directions dont work on the weird_cube
-	// probably concavities change the tri winding
 
 	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(0, 1, 0), 1)[1];
 	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(0, 0, -1), 1)[1];
