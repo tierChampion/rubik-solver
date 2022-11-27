@@ -93,7 +93,7 @@ namespace splr {
 
 	bool loadObj(const char* path, MeshData& finalMesh);
 
-	int isCCW(const glm::vec3& p, const Vertex& v0, const Vertex& v1, const Vertex& v2);
+	int isCCW(const glm::vec3& p, const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact = false);
 
 	bool isEar(const std::vector<Vertex>& cyclic, int earId, int planeAxis, int desiredWinding);
 

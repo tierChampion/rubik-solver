@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
 	}
 	else if (SPLIT) {
 		TEXTURE_PATH = "res/split.png";
-		OBJ_PATH = "res/egg.obj"; // ear trimming not for egg, monkey, ghost, gem
+		OBJ_PATH = "res/teeth.obj"; // ear trimming not for monkey, teeth
 		REFLECTIVITY = 0.8f;
 		SHINE_DAMPER = 0.6f;
 	}
@@ -167,11 +167,23 @@ int main(int argc, char** argv) {
 	std::vector<splr::MeshData> meshes(1);
 	splr::loadObj((PROJ_PATH + OBJ_PATH).c_str(), meshes[0]);
 
+	// MONKEY: 
+
+	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(1, 0, 0), 1)[0];
+	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(0, -1, 0), 1)[0];
+
+	// TEETH: 
+
+	// LU
+	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(-1, 0, 0), 1)[0];
 	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(0, 1, 0), 1)[0];
+	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(0, 0, -1), 1)[1];
+
+	// BRU (not exact)
 	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(0, 0, -1), 1)[0];
-	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(1, 0, 0), 1)[0]; // no work
-	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(1, 0, 0), 1)[0]; // no work, step through
-	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(0, 0, 1), 1)[0];
+	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(0, 1, 0), 1)[0];
+	//meshes[0] = meshes[0].splitMeshAlongPlane(glm::vec3(1, 0, 0), 1)[0];
+
 
 	///*
 	if (SPLIT) {
