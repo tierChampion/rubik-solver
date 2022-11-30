@@ -1,5 +1,11 @@
 #include "loader.h"
 
+/// 
+/// TODO: Reformat this file for readability and logic
+/// Separate the relevent parts into their own file since the process is incredibly long
+/// And confusing. 
+/// 
+
 namespace splr {
 
 	/**
@@ -122,6 +128,7 @@ namespace splr {
 			}
 			else if (positives.size() == 0) {
 				// add to negative mesh (no positive corners)
+
 				for (int i = 0; i < 3; i++) {
 					negativeMesh.append((*this)[v + i]);
 				}
@@ -188,39 +195,30 @@ namespace splr {
 
 		Vertex intersection = Vertex(p, uv, n);
 
-		// Winding not ok depending on orientation
-		// neutral -> positives -> negatives
-		// else neutral -> negatives -> positives
 		bool windingOrder = ((zeros[0] + 1) % 3) == positives[0];
 
 		int start = zeros[0];
 
 		if (windingOrder) {
-			// 0 1+ p
 			posMesh.append((*this)[start + v]);
 			posMesh.append((*this)[(start + 1) % 3 + v]);
 			posMesh.append(intersection);
 
-			// P 2- 0
 			negMesh.append(intersection);
 			negMesh.append((*this)[(start + 2) % 3 + v]);
 			negMesh.append((*this)[start + v]);
 		}
 		else {
-			// 0 1+ p
 			negMesh.append((*this)[start + v]);
 			negMesh.append((*this)[(start + 1) % 3 + v]);
 			negMesh.append(intersection);
 
-			// P 2- 0
 			posMesh.append(intersection);
 			posMesh.append((*this)[(start + 2) % 3 + v]);
 			posMesh.append((*this)[start + v]);
 		}
-
 		/*
 		* When the triangle is very slim and there is only one intersection.
-		* TODO won't this break the pairs of edges?
 		*/
 		if (intersection != (*this)[start + v]) {
 			border.push_back(intersection);
@@ -248,13 +246,11 @@ namespace splr {
 		bool positiveBias = negatives.size() == 1;
 		int startId = positiveBias ? negatives[0] : positives[0];
 
-		// p1i = +p1 to -p0 and plane
 		glm::vec3 dir = pos[(startId + 1) % 3 + v] - pos[startId + v];
 
 		float t = planeDist - glm::dot(planeNorm, pos[startId + v]);
 		t /= glm::dot(planeNorm, dir);
 
-		// interpolate to point
 		glm::vec3 p = pos[startId + v] + t * dir;
 
 		glm::vec2 uv = uvs[startId + v] +
@@ -267,7 +263,6 @@ namespace splr {
 
 		Vertex inter1 = Vertex(p, uv, n);
 
-		// p2i = +p2 to -p0 and plane
 		dir = pos[(startId + 2) % 3 + v] - pos[startId + v];
 
 		t = planeDist - glm::dot(planeNorm, pos[startId + v]);
@@ -287,30 +282,27 @@ namespace splr {
 		Vertex inter2 = Vertex(p, uv, n);
 
 		if (positiveBias) {
-			// t1 = (p1i, p2i, -p0)
 			negMesh.append(inter1);
 			negMesh.append(inter2);
 			negMesh.append((*this)[startId + v]);
-			// t2 = (+p1, +p2, p1i)
+
 			posMesh.append(inter1);
 			posMesh.append((*this)[(startId + 1) % 3 + v]);
 			posMesh.append((*this)[(startId + 2) % 3 + v]);
-			// t3 = (+p2, p2i, p1i)
+
 			posMesh.append((*this)[(startId + 2) % 3 + v]);
 			posMesh.append(inter2);
 			posMesh.append(inter1);
 		}
 		else {
-			// possibly change winding order
-			// t1 = (p1i, p2i, -p0)
 			posMesh.append(inter1);
 			posMesh.append(inter2);
 			posMesh.append((*this)[startId + v]);
-			// t2 = (+p1, +p2, p1i)
+
 			negMesh.append((*this)[(startId + 1) % 3 + v]);
 			negMesh.append((*this)[(startId + 2) % 3 + v]);
 			negMesh.append(inter1);
-			// t3 = (+p2, p2i, p1i)
+
 			negMesh.append((*this)[(startId + 2) % 3 + v]);
 			negMesh.append(inter2);
 			negMesh.append(inter1);
@@ -318,12 +310,12 @@ namespace splr {
 
 		/*
 		* When the triangle is very slim and there is only one intersection.
-		* TODO won't this break the pairs of edges?
 		*/
 		if (inter1 != inter2) {
 			border.push_back(inter2);
 			border.push_back(inter1);
 		}
+
 	}
 
 	/**
@@ -333,6 +325,7 @@ namespace splr {
 	* @param v0 - Presumably most clockwise vertex
 	* @param v1 - Middle vertex
 	* @param v2 - Presumably most counter-clockwise vertex
+	* @param exact - Have the check be exact. Off by default
 	* @return whether the triangle is ccw
 	*/
 	int isCCW(const glm::vec3& p, const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact) {
@@ -340,11 +333,11 @@ namespace splr {
 		glm::vec3 triN = glm::cross(v1.p - v0.p,
 			v2.p - v0.p);
 
-		if (approximates(glm::vec3(0.f), triN) && !exact) return 0;
+		if (approximates(glm::vec3(0.f), triN) && !exact || triN == glm::vec3(0.f)) return 0;
 
 		triN = glm::normalize(triN);
 
-		int otherTest = glm::dot(p - v0.p, triN) >= 0 ? 1 : 2; // point faces camera
+		int otherTest = glm::dot(p - v0.p, triN) >= 0 ? 1 : 2;
 
 		return otherTest;
 	}
@@ -363,31 +356,43 @@ namespace splr {
 		// find the winding of the first tri
 		int desiredWinding = (glm::dot(glm::vec3(0, 0, 30) - planeNorm, -planeNorm) >= 0) ? 1 : 2;
 
-		// TODO fix winding bugs
+		// TODO fix winding bugs with thin triangles
 		std::vector<Vertex> cyclic = buildCyclicBorder(posMesh, negMesh, border, planeNorm, desiredWinding);
 
-		// TODO (make sure it works with proper winding)
+		// TODO for future more general version
 		//earTrimming(posMesh, negMesh, cyclic, planeNorm, desiredWinding);
 
-		///*
 		for (int i = 1; i < cyclic.size() - 1; i++) {
 
-			posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
-			posMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
-			posMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, planeNorm));
+			int triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0], cyclic[i], cyclic[i + 1]);
 
-			negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
-			negMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, -planeNorm));
-			negMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, -planeNorm));
+			if (triCCW == desiredWinding || true) {
+
+				posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
+				posMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
+				posMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, planeNorm));
+
+				negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+				negMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, -planeNorm));
+				negMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, -planeNorm));
+			}
+			else {
+
+				negMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
+				negMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
+				negMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, planeNorm));
+
+				posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+				posMesh.append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, -planeNorm));
+				posMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, -planeNorm));
+			}
 		}
-		//*/
 	}
 
 	/**
 	* Create a cyclic list of the perimeter of the border.
 	*
-	* TODO: This doesn't work correctly if the first vertex is concave.
-	* trying to find a convex vert to calculate the winding
+	* TODO: This doesn't work correctly if the vertex used for the winding is thin
 	*
 	* @param posMesh - mesh on the positive side of the slicing plane
 	* @param negMesh - mesh on the negative side of the slicing plane
@@ -426,34 +431,17 @@ namespace splr {
 					border.erase(border.begin() + (i - (i % 2)),
 						border.begin() + (i - (i % 2)) + 2);
 				}
-				// TODO: experimental, doesnt work for monkey and egg
-				/*
-				else if (border[i] == cyclic.front()) {
-					foundEdge = true;
-
-					std::cout << "front : " << i << std::endl;
-
-					cyclic.emplace(cyclic.begin(), border[i - 2 * (i % 2) + 1]);
-
-					border.erase(border.begin() + (i - (i % 2)),
-						border.begin() + (i - (i % 2)) + 2);
-				}
-				//*/
 				i++;
 			}
 
 			fullCircle = border.size() == 0 || !foundEdge;
 
-			// add it manualy
-			// TODO: potential problem with concave shapes (doesn't ear trim)
 			if (!foundEdge) {
-
-				std::cout << "yo" << std::endl;
 
 				for (int j = 0; j < border.size() - 1; j++) {
 
 					int triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0],
-						border[j], border[j + 1]); // point faces camera
+						border[j], border[j + 1]);
 
 					if (triCCW == desiredWinding) {
 						posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
@@ -481,7 +469,9 @@ namespace splr {
 		return cyclic;
 	}
 
-
+	/*
+	* TODO: maybe use 3 points to avoid thin tris (0 triCCW)?
+	*/
 	void MeshData::findWinding(MeshData& posMesh, MeshData& negMesh, std::vector<Vertex>& border,
 		std::vector<Vertex>& cyclic, const glm::vec3 planeNorm, int planeAxis, int desiredWinding) const {
 
@@ -511,43 +501,54 @@ namespace splr {
 
 		int neighbour = convex - 2 * (convex % 2) + 1;
 
-		// TODO I need to start at 0 for certain meshes, but why??
-		for (int i = 0; i < border.size() && cyclic.size() == 0; i++) {
+		Vertex vMiddle = border[convex];
+		Vertex vExtrem = border[neighbour];
 
-			bool isZero = (border[i] == border[convex]) && i != convex;
+		while (cyclic.size() == 0) {
+			// TODO I need to start at 0 for certain meshes, but why??
+			for (int i = 0; i < border.size() && cyclic.size() == 0; i++) {
 
-			if (isZero) {
+				bool isZero = (border[i] == border[convex]) && i != convex;
 
-				Vertex vMiddle = border[convex];
-				Vertex vExtrem = border[neighbour];
+				if (isZero) {
 
-				int triCCW = isCCW(glm::vec3(0, 0, 30), vExtrem,
-					vMiddle, border[i - 2 * (i % 2) + 1], true);
+					/////////////////
+					// CRUCIAL BUG //
+					/////////////////
 
-				if (triCCW == desiredWinding) {
+					// TODO: ouch when this is 0... 
+					// This however, is not normal since the vert should be a corner...
+					// this means there are most likely overlapping tris
+					// look at mistakes that might happen earlier
 
-					cyclic.push_back(vExtrem);
-					cyclic.push_back(vMiddle);
-					cyclic.push_back(border[i - 2 * (i % 2) + 1]);
-				}
-				else {
-					cyclic.push_back(border[i - 2 * (i % 2) + 1]);
-					cyclic.push_back(vMiddle);
-					cyclic.push_back(vExtrem);
-				}
+					int triCCW = isCCW(glm::vec3(0, 0, 30), vExtrem,
+						vMiddle, border[i - 2 * (i % 2) + 1], true);
 
-				// always delete what comes later in the vector first
-				if (i > convex) {
-					border.erase(border.begin() + (i - (i % 2)),
-						border.begin() + (i - (i % 2)) + 2);
-					border.erase(border.begin() + std::min(convex, neighbour),
-						border.begin() + std::min(convex, neighbour) + 2);
-				}
-				else {
-					border.erase(border.begin() + std::min(convex, neighbour),
-						border.begin() + std::min(convex, neighbour) + 2);
-					border.erase(border.begin() + (i - (i % 2)),
-						border.begin() + (i - (i % 2)) + 2);
+					if (triCCW == desiredWinding) {
+
+						cyclic.push_back(vExtrem);
+						cyclic.push_back(vMiddle);
+						cyclic.push_back(border[i - 2 * (i % 2) + 1]);
+					}
+					else {
+						cyclic.push_back(border[i - 2 * (i % 2) + 1]);
+						cyclic.push_back(vMiddle);
+						cyclic.push_back(vExtrem);
+					}
+
+					// always delete what comes later in the vector first
+					if (i > convex) {
+						border.erase(border.begin() + i - (i % 2),
+							border.begin() + i - (i % 2) + 2);
+						border.erase(border.begin() + std::min(convex, neighbour),
+							border.begin() + std::min(convex, neighbour) + 2);
+					}
+					else {
+						border.erase(border.begin() + std::min(convex, neighbour),
+							border.begin() + std::min(convex, neighbour) + 2);
+						border.erase(border.begin() + i - (i % 2),
+							border.begin() + i - (i % 2) + 2);
+					}
 				}
 			}
 		}
@@ -565,7 +566,7 @@ namespace splr {
 			p2[x] * (p1[y] - p0[y])));
 	}
 
-	/// EXPERIMENTAL FOR NOW /// 
+	/// EXPERIMENTAL /// 
 
 	/**
 	* Determine whether the vertex constitutes an ear.
@@ -585,7 +586,6 @@ namespace splr {
 
 		// TODO With very thin tris, the area is almost 0 and the cross product is very small
 		// this makes determining if it is an ear very difficult
-		// also there sometimes seems to be duplicate vertices which breaks this
 
 		double insideArea = triArea(cyclic[vPrev].p, cyclic[earId].p, cyclic[vNext].p, x, y);
 
@@ -630,9 +630,7 @@ namespace splr {
 	}
 
 	/**
-	* TODO, doesnt work with most meshes.
-	* They end up with more than 4 tris that are all concave for some reason.
-	* Maybe the check for convexity is wrong.
+	* TODO, probably doesnt work with meshes that don't have a full border
 	*
 	* Possible solution => keep a list of convex vertices and update it every time a tri is removed
 	* for all the affected verts. Then pick from these vertex to trimm.
@@ -670,6 +668,7 @@ namespace splr {
 						planeNorm);
 
 					// add to meshes (TODO fix normals)
+
 					posMesh.append(vFront);
 					posMesh.append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
 					posMesh.append(vBack);
@@ -701,7 +700,7 @@ namespace splr {
 					negMesh.append(Vertex(cyclic[1].p, cyclic[1].uv, -planeNorm));
 
 				}
-				else {
+				else if (triCCW != 0) {
 					posMesh.append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
 					posMesh.append(Vertex(cyclic[2].p, cyclic[2].uv, planeNorm));
 					posMesh.append(Vertex(cyclic[1].p, cyclic[1].uv, planeNorm));
