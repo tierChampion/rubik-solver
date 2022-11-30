@@ -8,7 +8,7 @@ namespace rubik {
 	* @param the coordinates of the cubie in cubie space
 	* @param scale of the cubie
 	*/
-	CubieModel::CubieModel(int x, int y, int z, float scaleFactor) {
+	CubieModel::CubieModel(int x, int y, int z, float scaleFactor, bool splitted) {
 
 		float SCALE_FACTOR_X = (x - 1) * (scaleFactor * 1.25f) + 1;
 		float SCALE_FACTOR_Y = (y - 1) * (scaleFactor / 2) + 1;
@@ -18,15 +18,17 @@ namespace rubik {
 
 		/*
 		* Position is half the size of the current cubie plus half the center cubie,
-		* unless the current cubie is the center.
+		* unless the current cubie is the center or the cubie models are parts of a bigger model.
 		*/
+
 		_pos = glm::vec3((x - 1) * (CUBIE_SIZE * (SCALE_FACTOR_X) / 2 + CUBIE_SIZE / 2.0f),
 			(y - 1) * (CUBIE_SIZE * (SCALE_FACTOR_Y) / 2 + CUBIE_SIZE / 2.0f),
 			(z - 1) * (CUBIE_SIZE * (SCALE_FACTOR_Z) / 2 + CUBIE_SIZE / 2.0f));
 
+
 		_scaleMat = glm::scale(glm::mat4(1.0f), scale);
 
-		_translateMat = glm::translate(glm::mat4(1.0f), _pos);
+		_translateMat = glm::translate(glm::mat4(1.0f), splitted ? glm::vec3(0) : _pos);
 
 		_quaternion = glm::quat(glm::vec3(0, 0, 0));
 
@@ -54,8 +56,7 @@ namespace rubik {
 	*/
 	void CubieModel::updateNormals() {
 
-		glm::mat4 unscaledModelMat = glm::toMat4(_quaternion) * _translateMat;
-		glm::vec3 newPos = glm::vec3(unscaledModelMat[3]);
+		glm::vec3 newPos = glm::vec3(glm::toMat4(_quaternion) * glm::vec4(_pos, 1.0));
 
 		/* Position in cubie space. */
 		int x = round(newPos[0] / CUBIE_SIZE) + 1;

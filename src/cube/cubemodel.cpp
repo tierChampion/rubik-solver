@@ -8,14 +8,14 @@ namespace rubik {
 	*
 	* @param mirror -> whether the cube is a mirror cube or a regular rubiks cube
 	*/
-	CubeModel::CubeModel(bool mirror) {
+	CubeModel::CubeModel(bool mirror, bool splitted) {
 
 		float scale = mirror ? MIRROR_SCALE : NORMAL_SCALE;
 
 		for (int x = 0; x < DIMENSION; x++) {
 			for (int y = 0; y < DIMENSION; y++) {
 				for (int z = 0; z < DIMENSION; z++) {
-					if (x != 1 || y != 1 || z != 1) _cubies.push_back(CubieModel(x, y, z, scale));
+					if (x != 1 || y != 1 || z != 1) _cubies.push_back(CubieModel(x, y, z, scale, splitted));
 
 				}
 			}
@@ -24,6 +24,7 @@ namespace rubik {
 		_quaternion = glm::quat(glm::vec3(0, 0, 0));
 		_steps = 10;
 		_currentStep = 0;
+		_splitted = splitted;
 	}
 
 	/**
@@ -32,22 +33,26 @@ namespace rubik {
 	* @param vao -> Vertex Array Buffer for the shape to render
 	* @param programId -> Shader program to use
 	*/
-	bool CubeModel::render(Vao vao, int programId) {
-
-		vao.bind();
+	bool CubeModel::render(const std::vector<Vao>& vaos, int programId) {
 
 		GLint mLocation = glGetUniformLocation(programId, "model");
 
+		int index = 0;
+
 		for (CubieModel cubie : _cubies) {
+
+			vaos[index * _splitted].bind();
 
 			glm::mat4 m = glm::toMat4(_quaternion) * cubie.getModelMat();
 
 			glUniformMatrix4fv(mLocation, 1, GL_FALSE, &m[0][0]);
 
-			glDrawArrays(GL_TRIANGLES, 0, vao.getTriCount());
-		}
+			glDrawArrays(GL_TRIANGLES, 0, vaos[index * _splitted].getTriCount());
 
-		vao.unbind();
+			vaos[index * _splitted].unbind();
+
+			index++;
+		}
 
 		return true;
 	}

@@ -6,6 +6,7 @@
 #include <glfw3.h>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
+#include <glm/glm.hpp>
 #include "helpers/helper_gl.h"
 
 #define _USE_MATH_DEFINES
@@ -34,6 +35,7 @@ const static char* W_TITLE = "Rubik's cube solver";
 static bool FULL_SCREEN = false;
 
 static bool MIRROR = false;
+static bool SPLIT = true;
 const static glm::vec3 CAMERA_POS(0, 0, 30);
 const static float FOV = 30.0f;
 const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
@@ -70,6 +72,13 @@ bool initGLFW() {
 
 int main(int argc, char** argv) {
 
+	const char* TEXTURE_PATH;
+	const char* OBJ_PATH = nullptr;
+	float REFLECTIVITY;
+	float SHINE_DAMPER;
+
+	/// RUBIK SOLVER ///
+
 	std::cout << "$$$$$$$\\             $$\\       $$\\ $$\\             $$$$$$\\            $$\\	\n"
 		<< "$$  __$$\\            $$ |      \\__|$$ |           $$  __$$\\           $$ |	\n"
 		<< "$$ |  $$ | $$\\   $$\\ $$$$$$$\\  $$\\ $$ |  $$\\      $$ /  \\__| $$$$$$\   $$ |$$\\    $$\\  $$$$$$\\    $$$$$$\\	\n"
@@ -80,6 +89,7 @@ int main(int argc, char** argv) {
 		<< "\\__|  \\__|  \\______/ \\_______/ \\__|\\__|  \\__|      \\______/  \\______/ \\__|    \\_/     \\_______| \\__|	\n"
 		<< std::endl;
 
+	/// COMMAND LINE ARGS ///
 	if (argc > 1) {
 
 		for (int i = 1; i < argc; i++) {
@@ -88,31 +98,62 @@ int main(int argc, char** argv) {
 
 			if (arg == "--mirror" || arg == "-m") {
 				MIRROR = true;
+				SPLIT = false;
+			}
+			else if (arg == "--split" || arg == "-s") {
+				SPLIT = true;
+				MIRROR = false;
+
+				arg = std::string_view(argv[++i]);
+				OBJ_PATH = arg.data();
 			}
 			else if (arg == "--fullscreen" || arg == "-fs") {
 				FULL_SCREEN = true;
 			}
 			else if (arg == "/?") {
 
-				std::cout << "[--mirror | -m] [-fullscreen | -fs]\n"
-					<< "--mirror | -m			Use a mirror cube instead of rubiks cube\n"
-					<< "--fullscreen | -fs		Display in full screen\n" << std::endl;
+				std::cout << "[--mirror | -m] [--split | -s] [-fullscreen | -fs]\n"
+					<< "--mirror | -m		Use a mirror cube instead of rubiks cube\n"
+					<< "--split | -s		Use an obj file in the project directory as the shape of the whole cube "
+					<< "which is then split into the cubies.\n"
+					<< "				This is still experimental, "
+					<< "so using a very simple convex shape is strongly recommended.\n"
+					<< "			You may use the blender project in this project to test a mesh.\n"
+					<< "				For a mesh to be fully supported, all the faces of the cubies should be a single convex polygon with no holes.\n"
+					<< "				Faces with big concavities have a strong chance to have extra geometry on them.\n"
+					<< "--fullscreen | -fs	Display in full screen\n" << std::endl;
 				exit(0);
 			}
 		}
 	}
 
+	/// PROJECT DIR ///
 	char buffer[255] = "";
 	char* execPath = _fullpath(buffer, argv[0], sizeof(buffer));
-
 	std::string PROJ_PATH(execPath);
 	size_t firstLoc = PROJ_PATH.find("\\RubikSolver\\");
-
 	PROJ_PATH = PROJ_PATH.substr(0, firstLoc) + "\\RubikSolver\\";
 
-	const char* TEXTURE_PATH = MIRROR ? "res/mirror.png" : "res/cubie.png";
-	const float REFLECTIVITY = MIRROR ? 0.8f : 0.0f;
-	const float SHINE_DAMPER = MIRROR ? 5.0f : 5.0f;
+	/// PARAMETER SETTINGS ///
+	if (MIRROR) {
+		TEXTURE_PATH = "res/Textures/mirror.png";
+		OBJ_PATH = "res/cubie.obj";
+		REFLECTIVITY = 0.8f;
+		SHINE_DAMPER = 5.0f;
+	}
+	else if (SPLIT) {
+		TEXTURE_PATH = "res/Textures/split.png";
+		if (!OBJ_PATH) OBJ_PATH = "res/shifted_cube.obj";
+		REFLECTIVITY = 0.8f;
+		SHINE_DAMPER = 0.6f;
+	}
+	else {
+		TEXTURE_PATH = "res/Textures/cubie.png";
+		OBJ_PATH = "res/cubie.obj";
+		REFLECTIVITY = 0.0f;
+		SHINE_DAMPER = 5.0f;
+	}
+
 
 	initGLFW();
 	initGL();
@@ -126,8 +167,50 @@ int main(int argc, char** argv) {
 	img.bind(0);
 
 	/* Creation of the cube and it's model. */
-	Vao vao((PROJ_PATH + "res/cubie.obj").c_str());
-	rubik::Cube cube(MIRROR);
+	std::vector<Vao> vaos;
+
+	std::vector<splr::MeshData> meshes(26);
+	splr::loadObj((PROJ_PATH + OBJ_PATH).c_str(), meshes[0]);
+
+	/// SLICING OF THE MESH IN THE CASE OF A SPLIT MESH ///
+	if (SPLIT) {
+		std::vector<glm::vec3> normals(3);
+		normals[0] = glm::vec3(1, 0, 0);
+		normals[1] = glm::vec3(0, 1, 0);
+		normals[2] = glm::vec3(0, 0, 1);
+
+		for (int i = 0; i < 3; i++) {
+
+			int size = meshes.size();
+
+			for (int j = 0; j < size; j++) {
+
+				// Split with the positive plane
+				std::vector<splr::MeshData> split = meshes.front().splitMeshAlongPlane(-normals[i], 1);
+
+				meshes.push_back(split[0]);
+				meshes.push_back(split[1]);
+
+				meshes.erase(meshes.begin());
+
+				// Split the negative part with the negative plane
+				splr::MeshData negative = meshes.back();
+				meshes.pop_back();
+
+				split = negative.splitMeshAlongPlane(normals[i], 1);
+
+				meshes.push_back(split[1]);
+				meshes.push_back(split[0]);
+			}
+		}
+
+		// Remove the center mesh
+		meshes.erase(meshes.begin() + 13);
+	}
+
+	for (splr::MeshData mesh : meshes) {
+		vaos.push_back(Vao(mesh));
+	}
 
 	/* Creation of the camera. */
 	Camera cam;
@@ -183,10 +266,12 @@ int main(int argc, char** argv) {
 
 	int frame = 0;
 
+	rubik::Cube cube(MIRROR, SPLIT);
+
 	while (window->running()) {
 
 		cube.update();
-		cube.render(vao, program._programId);
+		cube.render(vaos, program._programId);
 
 		/* Mouse controls <Whole cube orientation> */
 		Mouse::update(window->getWindow());

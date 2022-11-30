@@ -1,10 +1,7 @@
 #pragma once
 
-#include <glm/vec3.hpp>
-#include <glm/vec2.hpp>
+#include "../splitter/loader.h"
 #include <glew.h>
-#include <vector>
-#include <string>
 
 /**
 * Vertex array object. Stores mesh data.
@@ -17,12 +14,13 @@ class Vao {
 
 public:
 	Vao(const char* objFile);
-	void bind();
-	int getTriCount();
-	void unbind();
+	Vao(const splr::MeshData& mesh);
+	void bind() const;
+	int getTriCount() const;
+	void unbind() const;
 
 private:
-	bool loadObj(const char* path);
+	bool loadMesh(const splr::MeshData& mesh);
 
 };
 

@@ -2,7 +2,7 @@
 
 namespace rubik {
 
-	Cube::Cube(bool mirror) : _model(CubeModel(mirror)), _state() {}
+	Cube::Cube(bool mirror, bool splitted) : _model(CubeModel(mirror, splitted)), _state(), _centerOrientation(splitted) {}
 
 	/**
 	* Update the orientation of the cube.
@@ -16,9 +16,9 @@ namespace rubik {
 	* @param vao - model to use
 	* @param programId - id of the program to use
 	*/
-	void Cube::render(Vao vao, int programId) {
+	void Cube::render(const std::vector<Vao>& vaos, int programId) {
 
-		_model.render(vao, programId);
+		_model.render(vaos, programId);
 	}
 
 	/**
@@ -52,7 +52,7 @@ namespace rubik {
 
 		// Show the solution in the terminal
 		if (!solution.empty()) {
-			printf("<SOLUTION> %d moves: ", solution.size());
+			std::cout << "<SOLUTION> " << solution.size() << " moves: ";
 
 			while (solution.size() > 0) {
 				Move move = solution.front();
@@ -62,6 +62,18 @@ namespace rubik {
 			}
 
 			std::cout << std::endl;
+		}
+
+		if (_centerOrientation) {
+			std::vector<Move> extra = solveCenters(_state);
+
+			if (!extra.empty()) {
+				std::cout << "EXTRA CENTER ORIENTATIONS> " << extra.size() << " moves" << std::endl;
+
+				for (int m = 0; m < extra.size(); m++) {
+					turnFace(extra[m]);
+				}
+			}
 		}
 
 		_solving = false;
