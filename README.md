@@ -1,8 +1,10 @@
 # Rubik Solver
 
-![rubik cube](https://github.com/tierChampion/rubik-solver/blob/master/res/rubik_scramble.png)
+![rubik cube](https://github.com/tierChampion/rubik-solver/blob/master/res/Images/rubik_scramble.png)
 
-![mirror cube](https://github.com/tierChampion/rubik-solver/blob/master/res/mirror_scramble.png)
+![mirror cube](https://github.com/tierChampion/rubik-solver/blob/master/res/Images/mirror_scramble.png)
+
+![gem cube](https://github.com/tierChampion/rubik-solver/blob/master/res/Images/gem_scramble.png)
 
 ## Rendering
 
@@ -18,10 +20,10 @@ Kociemba's algorithm however only has 2 phases. The first one is basically a mix
 
 The problem with the Kociemba is that the number of possible positions is way too much in the second phase so tables are needed. However, by doing the third phase of the Thistlethwaite's algorithm before the second phase of the Kociemba's, no tables are needed anymore.
 
+## Slicing
+
+It is also possible to use a mesh chosen by the user for the general shape of the cube. This process of slicing will essentialy take the given mesh and slice it into three sections on each axis making 26 distinct parts that will then be used for each of the cubies. The problem basically boils down to the triangulation of the polygon created by the intersection between the slicing plane and the mesh. However, since this problem is non-trivial for all polygons and it wasn't the focus of this project, only a few shapes are truly supported. Any 3D convex shape will work and 3D shapes with really small concavities will visibly work. In general, it is recommended that the shapes used have a pretty low tri count (~less than 2000) and are either convex or have tiny concavities.
+
 ## Parameters
 
-A few command line parameters are available with the executable that can be enumerated with the '/?' parameter. Primarely, a Mirror cube can be used instead of a Rubik's cube. A mirror cube only has a single color but the shape of each cubie is different.
-
-### Future
-
-Possible feature to add: a custom mesh could be used for the cube and be split into the tiny cubies.
+A few command line parameters are available with the executable that can be enumerated with the '/?' parameter. Primarely, a Mirror cube can be used instead of a Rubik's cube. A mirror cube only has a single color but the shape of each cubie is different. There is also the slicing feature talked about above.
