@@ -22,6 +22,7 @@
 #include "cube/cube.h"
 #include "opengl/vao.h"
 #include "opengl/camera.h"
+#include "meshes/meshsplitter.h"
 #include "glsl/program.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -35,7 +36,7 @@ const static char* W_TITLE = "Rubik's cube solver";
 static bool FULL_SCREEN = false;
 
 static bool MIRROR = false;
-static bool SPLIT = true;
+static bool SPLIT = false;
 const static glm::vec3 CAMERA_POS(0, 0, 30);
 const static float FOV = 30.0f;
 const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
@@ -69,6 +70,13 @@ bool initGLFW() {
 	window->setSwapInterval(1);
 	return true;
 }
+
+/*
+TODO:
+
+UNDO LAST COMMIT, STASH CHANGES, CHANGE TO DEV, COMMIT AND PUSH ON DEV AND FINALLY MERGE WITH MASTER
+
+*/
 
 int main(int argc, char** argv) {
 
@@ -169,46 +177,17 @@ int main(int argc, char** argv) {
 	/* Creation of the cube and it's model. */
 	std::vector<Vao> vaos;
 
-	std::vector<splr::MeshData> meshes(26);
-	splr::loadObj((PROJ_PATH + OBJ_PATH).c_str(), meshes[0]);
+	splr::MeshData originalMesh;
+	splr::loadObj((PROJ_PATH + OBJ_PATH).c_str(), originalMesh);
+
+	splr::MeshSplitter splitter(originalMesh);
 
 	/// SLICING OF THE MESH IN THE CASE OF A SPLIT MESH ///
 	if (SPLIT) {
-		std::vector<glm::vec3> normals(3);
-		normals[0] = glm::vec3(1, 0, 0);
-		normals[1] = glm::vec3(0, 1, 0);
-		normals[2] = glm::vec3(0, 0, 1);
-
-		for (int i = 0; i < 3; i++) {
-
-			int size = meshes.size();
-
-			for (int j = 0; j < size; j++) {
-
-				// Split with the positive plane
-				std::vector<splr::MeshData> split = meshes.front().splitMeshAlongPlane(-normals[i], 1);
-
-				meshes.push_back(split[0]);
-				meshes.push_back(split[1]);
-
-				meshes.erase(meshes.begin());
-
-				// Split the negative part with the negative plane
-				splr::MeshData negative = meshes.back();
-				meshes.pop_back();
-
-				split = negative.splitMeshAlongPlane(normals[i], 1);
-
-				meshes.push_back(split[1]);
-				meshes.push_back(split[0]);
-			}
-		}
-
-		// Remove the center mesh
-		meshes.erase(meshes.begin() + 13);
+		splitter.splitMeshIntoRubik();
 	}
 
-	for (splr::MeshData mesh : meshes) {
+	for (splr::MeshData mesh : splitter.getMeshes()) {
 		vaos.push_back(Vao(mesh));
 	}
 
