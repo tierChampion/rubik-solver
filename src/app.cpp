@@ -175,6 +175,7 @@ int main(int argc, char** argv) {
 
 	splr::MeshSplitter splitter(originalMesh);
 	/// SLICING OF THE MESH IN THE CASE OF A SPLIT MESH ///
+
 	if (SPLIT) {
 		splitter.splitMeshIntoRubik();
 	}
