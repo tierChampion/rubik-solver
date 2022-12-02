@@ -71,6 +71,13 @@ bool initGLFW() {
 	return true;
 }
 
+/*
+TODO:
+
+UNDO LAST COMMIT, STASH CHANGES, CHANGE TO DEV, COMMIT AND PUSH ON DEV AND FINALLY MERGE WITH MASTER
+
+*/
+
 int main(int argc, char** argv) {
 
 	const char* TEXTURE_PATH;
@@ -174,8 +181,8 @@ int main(int argc, char** argv) {
 	splr::loadObj((PROJ_PATH + OBJ_PATH).c_str(), originalMesh);
 
 	splr::MeshSplitter splitter(originalMesh);
-	/// SLICING OF THE MESH IN THE CASE OF A SPLIT MESH ///
 
+	/// SLICING OF THE MESH IN THE CASE OF A SPLIT MESH ///
 	if (SPLIT) {
 		splitter.splitMeshIntoRubik();
 	}
