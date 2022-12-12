@@ -19,35 +19,28 @@ namespace splr {
 		// Construct the cyclic list of the border vertices
 		std::vector<Vertex> cyclic = buildCyclicBorder(halves, border, planeNorm, desiredWinding);
 
-		// TODO for future. A more general algorithm for triangulation
-		//earTrimming(posMesh, negMesh, cyclic, planeNorm, desiredWinding);
+		// TODO for future. A more general algorithm for triangulation.
+		//earTrimming(halves, cyclic, planeNorm, desiredWinding);
 
 		// Naive triangulation (only works on convex polygons
+		///*
 		for (int i = 1; i < cyclic.size() - 1; i++) {
 
 			// Forcefull winding for bugs
-			int triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0], cyclic[i], cyclic[i + 1]);
+			int triCCW = isCCW(cyclic[0], cyclic[i], cyclic[i + 1]);
+
 			if (triCCW == desiredWinding) {
 
-				halves[0].append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
-				halves[0].append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
-				halves[0].append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, planeNorm));
+				halves[0].append(Vertex(cyclic[0]._p, cyclic[0]._uv, planeNorm));
+				halves[0].append(Vertex(cyclic[i]._p, cyclic[i]._uv, planeNorm));
+				halves[0].append(Vertex(cyclic[i + 1]._p, cyclic[i + 1]._uv, planeNorm));
 
-				halves[1].append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
-				halves[1].append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, -planeNorm));
-				halves[1].append(Vertex(cyclic[i].p, cyclic[i].uv, -planeNorm));
-			}
-			else {
-
-				halves[1].append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
-				halves[1].append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
-				halves[1].append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, planeNorm));
-
-				halves[0].append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
-				halves[0].append(Vertex(cyclic[i + 1].p, cyclic[i + 1].uv, -planeNorm));
-				halves[0].append(Vertex(cyclic[i].p, cyclic[i].uv, -planeNorm));
+				halves[1].append(Vertex(cyclic[0]._p, cyclic[0]._uv, -planeNorm));
+				halves[1].append(Vertex(cyclic[i + 1]._p, cyclic[i + 1]._uv, -planeNorm));
+				halves[1].append(Vertex(cyclic[i]._p, cyclic[i]._uv, -planeNorm));
 			}
 		}
+		//*/
 	}
 
 	/**
@@ -60,17 +53,18 @@ namespace splr {
 	* @param exact - Have the check be exact. Off by default
 	* @return whether the triangle is ccw
 	*/
-	int MeshSplitter::isCCW(const glm::vec3& p,
-		const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact) const {
+	int MeshSplitter::isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact) const {
 
-		glm::vec3 triN = glm::cross(v1.p - v0.p,
-			v2.p - v0.p);
+		static const glm::vec3 INFINITE_CAMERA_POS = glm::vec3(0, 0, 100);
+
+		glm::vec3 triN = glm::cross(v1._p - v0._p,
+			v2._p - v0._p);
 
 		if (approximates(glm::vec3(0.f), triN) && !exact || triN == glm::vec3(0.f)) return 0;
 
 		triN = glm::normalize(triN);
 
-		int otherTest = glm::dot(p - v0.p, triN) >= 0 ? 1 : 2;
+		int otherTest = glm::dot(INFINITE_CAMERA_POS - v0._p, triN) >= 0 ? 1 : 2;
 
 		return otherTest;
 	}
@@ -123,30 +117,30 @@ namespace splr {
 
 			// Sometimes, shape borders have gaps. Manually add all the tris
 			if (!foundEdge) {
-
+				std::cout << "yo?" << std::endl;
 				for (int j = 0; j < border.size() - 1; j++) {
 
-					int triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0],
+					int triCCW = isCCW(cyclic[0],
 						border[j], border[j + 1]);
 
 					if (triCCW == desiredWinding) {
-						halves[0].append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
-						halves[0].append(Vertex(border[j].p, border[j].uv, planeNorm));
-						halves[0].append(Vertex(border[j + 1].p, border[j + 1].uv, planeNorm));
+						halves[0].append(Vertex(cyclic[0]._p, cyclic[0]._uv, planeNorm));
+						halves[0].append(Vertex(border[j]._p, border[j]._uv, planeNorm));
+						halves[0].append(Vertex(border[j + 1]._p, border[j + 1]._uv, planeNorm));
 
-						halves[1].append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
-						halves[1].append(Vertex(border[j + 1].p, border[j + 1].uv, -planeNorm));
-						halves[1].append(Vertex(border[j].p, border[j].uv, -planeNorm));
+						halves[1].append(Vertex(cyclic[0]._p, cyclic[0]._uv, -planeNorm));
+						halves[1].append(Vertex(border[j + 1]._p, border[j + 1]._uv, -planeNorm));
+						halves[1].append(Vertex(border[j]._p, border[j]._uv, -planeNorm));
 
 					}
 					else {
-						halves[0].append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
-						halves[0].append(Vertex(border[j + 1].p, border[j + 1].uv, planeNorm));
-						halves[0].append(Vertex(border[j].p, border[j].uv, planeNorm));
+						halves[0].append(Vertex(cyclic[0]._p, cyclic[0]._uv, planeNorm));
+						halves[0].append(Vertex(border[j + 1]._p, border[j + 1]._uv, planeNorm));
+						halves[0].append(Vertex(border[j]._p, border[j]._uv, planeNorm));
 
-						halves[1].append(Vertex(border[j].p, border[j].uv, -planeNorm));
-						halves[1].append(Vertex(border[j + 1].p, border[j + 1].uv, -planeNorm));
-						halves[1].append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
+						halves[1].append(Vertex(border[j]._p, border[j]._uv, -planeNorm));
+						halves[1].append(Vertex(border[j + 1]._p, border[j + 1]._uv, -planeNorm));
+						halves[1].append(Vertex(cyclic[0]._p, cyclic[0]._uv, -planeNorm));
 					}
 				}
 			}
@@ -158,6 +152,9 @@ namespace splr {
 	/*
 	* TODO: There is a known bug where found convex vertex forms a thin triangle,
 	* with which the winding can't be determined.
+	*
+	* Possible fix: Generate a random direction and check if there is a unique maximal vert.
+	* Otherwise, retry with another random direction. It seems to work for most cases, but it gets very slow.
 	*/
 	void MeshSplitter::findWinding(std::vector<Vertex>& border,
 		std::vector<Vertex>& cyclic, const glm::vec3 planeNorm, int planeAxis, int desiredWinding) const {
@@ -167,46 +164,52 @@ namespace splr {
 
 		int convex = 0;
 
-		float maxX = border[0].p[x];
-		float maxY = border[0].p[y];
+		float max = 0;
 
-		// Find the vertex which maximises the two dimensions, it is necessarly convex
-		for (int i = 1; i < border.size(); i++) {
+		bool foundConvex = false;
 
-			if (border[i].p[x] > maxX) {
-				convex = i;
-				maxX = border[i].p[x];
-				maxY = border[i].p[y];
-			}
-			else if (border[i].p[x] == maxX) {
-				if (border[i].p[y] > maxY) {
+		float maxX = border[0]._p[x];
+		float maxY = border[0]._p[y];
+
+		do {
+
+			float xStr = glm::gaussRand(0.0f, 1.0f);
+			float yStr = glm::gaussRand(0.0f, 1.0f);
+
+			int convex = 0;
+
+			float max = border[0]._p[x] * xStr + border[0]._p[y] * yStr;
+
+			// Find the vertex which maximises the two dimensions, it is necessarly convex
+			for (int i = 1; i < border.size(); i++) {
+
+				if (border[i] == border[convex]) continue;
+
+				float dist = border[i]._p[x] * xStr + border[i]._p[y] * yStr;
+
+				if (dist > max) {
 					convex = i;
-					maxX = border[i].p[x];
-					maxY = border[i].p[y];
+					max = dist;
 				}
 			}
-		}
 
-		int neighbour = convex - 2 * (convex % 2) + 1;
+			int neighbour = convex - 2 * (convex % 2) + 1;
 
-		Vertex vMiddle = border[convex];
-		Vertex vExtrem = border[neighbour];
+			Vertex vMiddle = border[convex];
+			Vertex vExtrem = border[neighbour];
 
-		while (cyclic.size() == 0) {
-			// TODO I need to start at 0 for certain meshes, but why??
-			for (int i = 0; i < border.size() && cyclic.size() == 0; i++) {
+			for (int i = convex; i < border.size() && cyclic.size() == 0; i++) {
 
 				bool isZero = (border[i] == border[convex]) && i != convex;
 
 				if (isZero) {
 
-					/////////////////
-					// CRUCIAL BUG //
-					/////////////////
-
-					// TODO: ouch when this is 0... 
-					int triCCW = isCCW(glm::vec3(0, 0, 30), vExtrem,
+					int triCCW = isCCW(vExtrem,
 						vMiddle, border[i - 2 * (i % 2) + 1], true);
+
+					if (triCCW == 0) {
+						break;
+					}
 
 					if (triCCW == desiredWinding) {
 
@@ -221,25 +224,22 @@ namespace splr {
 					}
 
 					// Remove the tris that were processed
-					if (i > convex) {
-						border.erase(border.begin() + i - (i % 2),
-							border.begin() + i - (i % 2) + 2);
-						border.erase(border.begin() + std::min(convex, neighbour),
-							border.begin() + std::min(convex, neighbour) + 2);
-					}
-					else {
-						border.erase(border.begin() + std::min(convex, neighbour),
-							border.begin() + std::min(convex, neighbour) + 2);
-						border.erase(border.begin() + i - (i % 2),
-							border.begin() + i - (i % 2) + 2);
-					}
+
+					border.erase(border.begin() + i - (i % 2),
+						border.begin() + i - (i % 2) + 2);
+					border.erase(border.begin() + std::min(convex, neighbour),
+						border.begin() + std::min(convex, neighbour) + 2);
+
+					foundConvex = true;
+
 				}
 			}
-		}
+		} while (!foundConvex);
 	}
 
 	///
 	/// TODO: EXPERIMENTAL FUNCTIONALITIES FROM THIS POINT
+	/// WORKS FOR ALMOST EVERYTHING, BUT CONCAVITIES STILL HAVE TROUBLES
 	///
 
 	/**
@@ -275,16 +275,16 @@ namespace splr {
 		// TODO With very thin tris, the area is almost 0 and the cross product is very small
 		// this makes determining if it is an ear very difficult
 
-		double insideArea = triArea(cyclic[vPrev].p, cyclic[earId].p, cyclic[vNext].p, x, y);
+		double insideArea = triArea(cyclic[vPrev]._p, cyclic[earId]._p, cyclic[vNext]._p, x, y);
 
 		if (insideArea == 0) {
 			return true;
 		}
 
-		int isConvex = isCCW(glm::vec3(0, 0, 30), cyclic[vPrev], cyclic[earId], cyclic[vNext]);
+		int isConvex = isCCW(cyclic[vPrev], cyclic[earId], cyclic[vNext]);
 
-		if (isConvex == 0)
-			return true;
+		//if (isConvex == 0)
+			//return true;
 
 		if (isConvex != desiredWinding)
 			return false;
@@ -303,9 +303,9 @@ namespace splr {
 			int index = (i + vNext) % cyclic.size();
 
 			// Calculate the sum of the three small triangles for each vertices.
-			double area1 = triArea(cyclic[index].p, cyclic[earId].p, cyclic[vNext].p, x, y),
-				area2 = triArea(cyclic[vPrev].p, cyclic[index].p, cyclic[vNext].p, x, y),
-				area3 = triArea(cyclic[vPrev].p, cyclic[earId].p, cyclic[index].p, x, y);
+			double area1 = triArea(cyclic[index]._p, cyclic[earId]._p, cyclic[vNext]._p, x, y),
+				area2 = triArea(cyclic[vPrev]._p, cyclic[index]._p, cyclic[vNext]._p, x, y),
+				area3 = triArea(cyclic[vPrev]._p, cyclic[earId]._p, cyclic[index]._p, x, y);
 
 			// If the sum is equal to the total, the point is inside the triangle
 			// thus, we don't have an ear
@@ -318,10 +318,8 @@ namespace splr {
 	}
 
 	/**
-	* TODO, probably doesnt work with meshes that don't have a full border
-	*
-	* Possible solution => keep a list of convex vertices and update it every time a tri is removed
-	* for all the affected verts. Then pick from these vertex to trimm.
+	* TODO works pretty well except that it doesnt really rebuild a concave border.
+	* Test with the pyramid
 	*/
 	void MeshSplitter::earTrimming(std::vector<MeshData>& halves, std::vector<Vertex>& cyclic,
 		const glm::vec3 planeNorm, int desiredWinding) const {
@@ -336,6 +334,10 @@ namespace splr {
 		// Make it does what it needs to do.
 		int planeAxis = (planeNorm.y != 0) * 1 + (planeNorm.z != 0) * 2;
 
+		// square pyramid, stuff are missing
+		int triCount = 11;
+		int counter = 0;
+
 		while (cyclic.size() >= 3) {
 
 			bool foundEar = false;
@@ -347,58 +349,55 @@ namespace splr {
 
 					foundEar = true;
 
-					Vertex vFront(cyclic[(i + cyclic.size() - 1) % cyclic.size()].p,
-						cyclic[(i + cyclic.size() - 1) % cyclic.size()].uv,
+					Vertex vFront(cyclic[(i + cyclic.size() - 1) % cyclic.size()]._p,
+						cyclic[(i + cyclic.size() - 1) % cyclic.size()]._uv,
 						planeNorm);
 
-					Vertex vBack(cyclic[(i + 1) % cyclic.size()].p,
-						cyclic[(i + 1) % cyclic.size()].uv,
+					Vertex vBack(cyclic[(i + 1) % cyclic.size()]._p,
+						cyclic[(i + 1) % cyclic.size()]._uv,
 						planeNorm);
 
 					// add to meshes (TODO fix normals)
 
 					halves[0].append(vFront);
-					halves[0].append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
+					halves[0].append(Vertex(cyclic[i]._p, cyclic[i]._uv, planeNorm));
 					halves[0].append(vBack);
 
 					halves[1].append(vBack);
-					halves[1].append(Vertex(cyclic[i].p, cyclic[i].uv, planeNorm));
+					halves[1].append(Vertex(cyclic[i]._p, cyclic[i]._uv, planeNorm));
 					halves[1].append(vFront);
 
 					// remove from list
-
 					cyclic.erase(cyclic.begin() + i, cyclic.begin() + i + 1);
+
+					counter++;
+
+					if (counter >= triCount) {
+						cyclic.clear();
+					}
 				}
 
 				i++;
 			}
 
 			// add last tri (NORMALY THIS SHOULD NOT BE CONSIDERED)
-			if (cyclic.size() == 3) {
-				int triCCW = isCCW(glm::vec3(0, 0, 30), cyclic[0], // doesnt return the right thing?
-					cyclic[1], cyclic[2]); // point faces camera
 
-				if (triCCW == desiredWinding) {
-					halves[0].append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
-					halves[0].append(Vertex(cyclic[1].p, cyclic[1].uv, planeNorm));
-					halves[0].append(Vertex(cyclic[2].p, cyclic[2].uv, planeNorm));
+			if (!foundEar && cyclic.size() >= 3) {
 
-					halves[1].append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
-					halves[1].append(Vertex(cyclic[2].p, cyclic[2].uv, -planeNorm));
-					halves[1].append(Vertex(cyclic[1].p, cyclic[1].uv, -planeNorm));
+				int triCCW = isCCW(cyclic[0],
+					cyclic[2], cyclic[1]); // point faces camera
 
-				}
-				else if (triCCW != 0) {
-					halves[0].append(Vertex(cyclic[0].p, cyclic[0].uv, planeNorm));
-					halves[0].append(Vertex(cyclic[2].p, cyclic[2].uv, planeNorm));
-					halves[0].append(Vertex(cyclic[1].p, cyclic[1].uv, planeNorm));
+				std::cout << "No ears: " << cyclic.size() << " " << (triCCW == desiredWinding) << std::endl;
+				//break;
+				halves[0].append(Vertex(cyclic[0]._p, cyclic[0]._uv, planeNorm));
+				halves[0].append(Vertex(cyclic[2]._p, cyclic[2]._uv, planeNorm));
+				halves[0].append(Vertex(cyclic[1]._p, cyclic[1]._uv, planeNorm));
 
-					halves[1].append(Vertex(cyclic[1].p, cyclic[1].uv, -planeNorm));
-					halves[1].append(Vertex(cyclic[2].p, cyclic[2].uv, -planeNorm));
-					halves[1].append(Vertex(cyclic[0].p, cyclic[0].uv, -planeNorm));
-				}
+				halves[1].append(Vertex(cyclic[0]._p, cyclic[0]._uv, -planeNorm));
+				halves[1].append(Vertex(cyclic[1]._p, cyclic[1]._uv, -planeNorm));
+				halves[1].append(Vertex(cyclic[2]._p, cyclic[2]._uv, -planeNorm));
 
-				cyclic.clear();
+				cyclic.erase(cyclic.begin() + 1, cyclic.begin() + 2);
 			}
 		}
 	}

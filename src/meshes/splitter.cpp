@@ -12,7 +12,6 @@ namespace splr {
 
 				// Split with the positive plane
 				std::vector<splr::MeshData> split = splitMeshAlongPlane(0, -_planeNormals[i]);
-				//_meshes.front().splitMeshAlongPlane(-_planeNormals[i], 1);
 
 				_meshes.push_back(split[0]);
 				_meshes.push_back(split[1]);
@@ -35,6 +34,15 @@ namespace splr {
 		_meshes.erase(_meshes.begin() + 13);
 	}
 
+	void MeshSplitter::splitSingleSide(const glm::vec3 planeNorm, int section) {
+
+		std::vector<splr::MeshData> split = splitMeshAlongPlane(0, planeNorm);
+
+		_meshes.push_back(split[section == 0 ? 0 : 1]);
+
+		_meshes.erase(_meshes.begin());
+	}
+
 	/**
 	* Seperates a mesh into two meshes with a plane.
 	* @param planeNorm - surface normal of the plane
@@ -44,7 +52,7 @@ namespace splr {
 
 		MeshData original = _meshes[meshId];
 
-		std::vector<MeshData> halves(2);
+		std::vector<MeshData> halves = std::vector<MeshData>(2);
 		halves[0] = MeshData();
 		halves[1] = MeshData();
 
@@ -56,7 +64,7 @@ namespace splr {
 
 			for (int i = 0; i < 3; i++) {
 				// plug into ax + by + cz - d
-				float distance = glm::dot(original.pos[v + i], planeNorm) - SPLIT_PLANE_DIST;
+				float distance = glm::dot(original._pos[v + i], planeNorm) - SPLIT_PLANE_DIST;
 				if (distance > 0) dists.positives.push_back(i);
 				else if (distance < 0) dists.negatives.push_back(i);
 				else dists.zeros.push_back(i);
@@ -100,17 +108,17 @@ namespace splr {
 	Vertex MeshSplitter::getPlaneEdgeIntersection(const glm::vec3 planeNorm,
 		const Vertex& v1, const Vertex& v2) const {
 
-		glm::vec3 dir = v2.p - v1.p;
+		glm::vec3 dir = v2._p - v1._p;
 
-		float t = SPLIT_PLANE_DIST - glm::dot(planeNorm, v1.p);
+		float t = SPLIT_PLANE_DIST - glm::dot(planeNorm, v1._p);
 		t /= glm::dot(planeNorm, dir);
 
 		// interpolate to point
-		glm::vec3 p = v1.p + t * dir;
+		glm::vec3 p = v1._p + t * dir;
 
-		glm::vec2 uv = v1.uv + (v2.uv - v1.uv) * t / glm::length(dir);
+		glm::vec2 uv = v1._uv + (v2._uv - v1._uv) * t / glm::length(dir);
 
-		glm::vec3 n = v1.n + (v2.n - v1.n) * t / glm::length(dir);
+		glm::vec3 n = v1._n + (v2._n - v1._n) * t / glm::length(dir);
 
 		return Vertex(p, uv, n);
 	}

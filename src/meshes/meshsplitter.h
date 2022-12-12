@@ -1,6 +1,7 @@
 #pragma once
 
 #include "loader.h"
+#include <glm/gtc/random.hpp>
 
 namespace splr {
 
@@ -11,6 +12,9 @@ namespace splr {
 	};
 
 	static const float SPLIT_PLANE_DIST = 1;
+	static const int CUBIE_COUNT = 26;
+
+	// TODO add a debug single split function
 
 	class MeshSplitter {
 
@@ -33,10 +37,16 @@ namespace splr {
 		}
 
 		std::vector<MeshData>& getMeshes() {
+
+			if (_meshes.size() != CUBIE_COUNT) {
+				_meshes.resize(CUBIE_COUNT);
+			}
+
 			return _meshes;
 		}
 
 		void splitMeshIntoRubik();
+		void splitSingleSide(const glm::vec3 planeNorm, int section);
 
 	private:
 
@@ -63,8 +73,7 @@ namespace splr {
 		void triangulateFace(std::vector<MeshData>& halves,
 			std::vector<Vertex>& border, const glm::vec3 planeNorm) const;
 
-		int isCCW(const glm::vec3& p,
-			const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact = false) const;
+		int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact = false) const;
 
 		std::vector<Vertex> buildCyclicBorder(std::vector<MeshData>& halves, std::vector<Vertex>& border,
 			const glm::vec3 planeNorm, int desiredWinding) const;

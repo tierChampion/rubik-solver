@@ -24,15 +24,15 @@ namespace splr {
 
 	struct Vertex {
 
-		glm::vec3 p;
-		glm::vec2 uv;
-		glm::vec3 n;
+		glm::vec3 _p;
+		glm::vec2 _uv;
+		glm::vec3 _n;
 
-		Vertex(const glm::vec3 p, const glm::vec2 uv, const glm::vec3 n) : p(p), uv(uv), n(n) {}
+		Vertex(const glm::vec3 p, const glm::vec2 uv, const glm::vec3 n) : _p(p), _uv(uv), _n(n) {}
 
 		bool operator==(const Vertex& v) const {
 
-			return approximates(this->p, v.p);
+			return approximates(this->_p, v._p);
 		}
 
 		bool operator!=(const Vertex& v) const {
@@ -42,24 +42,24 @@ namespace splr {
 
 	struct MeshData {
 
-		std::vector<glm::vec3> pos;
-		std::vector<glm::vec2> uvs;
-		std::vector<glm::vec3> norms;
+		std::vector<glm::vec3> _pos;
+		std::vector<glm::vec2> _uvs;
+		std::vector<glm::vec3> _norms;
 
 		MeshData() {}
 
 		void append(const Vertex vert) {
-			pos.push_back(vert.p);
-			uvs.push_back(vert.uv);
-			norms.push_back(vert.n);
+			_pos.push_back(vert._p);
+			_uvs.push_back(vert._uv);
+			_norms.push_back(vert._n);
 		}
 
 		Vertex operator[](int i) const {
-			return Vertex(pos[i], uvs[i], norms[i]);
+			return Vertex(_pos[i], _uvs[i], _norms[i]);
 		}
 
 		int size() const {
-			return pos.size();
+			return _pos.size();
 		}
 	};
 

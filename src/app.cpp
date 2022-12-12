@@ -35,9 +35,8 @@ const static unsigned int W_HEIGHT = 720;
 const static char* W_TITLE = "Rubik's cube solver";
 static bool FULL_SCREEN = false;
 
-static bool MIRROR = false;
+static bool MIRROR = true;
 static bool SPLIT = false;
-const static glm::vec3 CAMERA_POS(0, 0, 30);
 const static float FOV = 30.0f;
 const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
 const static float NEAR = 0.1f;
@@ -71,19 +70,14 @@ bool initGLFW() {
 	return true;
 }
 
-/*
-TODO:
-
-UNDO LAST COMMIT, STASH CHANGES, CHANGE TO DEV, COMMIT AND PUSH ON DEV AND FINALLY MERGE WITH MASTER
-
-*/
 
 int main(int argc, char** argv) {
 
-	const char* TEXTURE_PATH;
+	const char* TEXTURE_PATH = nullptr;
 	const char* OBJ_PATH = nullptr;
 	float REFLECTIVITY;
 	float SHINE_DAMPER;
+	glm::vec3 CAMERA_POS;
 
 	/// RUBIK SOLVER ///
 
@@ -146,18 +140,21 @@ int main(int argc, char** argv) {
 	if (MIRROR) {
 		TEXTURE_PATH = "res/Textures/mirror.png";
 		OBJ_PATH = "res/cubie.obj";
+		CAMERA_POS = glm::vec3(0, 0, 30);
 		REFLECTIVITY = 0.8f;
 		SHINE_DAMPER = 5.0f;
 	}
 	else if (SPLIT) {
 		TEXTURE_PATH = "res/Textures/split.png";
-		if (!OBJ_PATH) OBJ_PATH = "res/shifted_cube.obj";
+		if (!OBJ_PATH) OBJ_PATH = "res/gem.obj";
+		CAMERA_POS = glm::vec3(0, 0, 40);
 		REFLECTIVITY = 0.8f;
 		SHINE_DAMPER = 0.6f;
 	}
 	else {
 		TEXTURE_PATH = "res/Textures/cubie.png";
 		OBJ_PATH = "res/cubie.obj";
+		CAMERA_POS = glm::vec3(0, 0, 30);
 		REFLECTIVITY = 0.0f;
 		SHINE_DAMPER = 5.0f;
 	}
@@ -185,6 +182,7 @@ int main(int argc, char** argv) {
 	/// SLICING OF THE MESH IN THE CASE OF A SPLIT MESH ///
 	if (SPLIT) {
 		splitter.splitMeshIntoRubik();
+		//splitter.splitSingleSide(glm::vec3(0, 0, -1), 0);
 	}
 
 	for (splr::MeshData mesh : splitter.getMeshes()) {
