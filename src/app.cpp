@@ -35,8 +35,8 @@ const static unsigned int W_HEIGHT = 720;
 const static char* W_TITLE = "Rubik's cube solver";
 static bool FULL_SCREEN = false;
 
-static bool MIRROR = true;
-static bool SPLIT = false;
+static bool MIRROR = false;
+static bool SPLIT = true;
 const static float FOV = 30.0f;
 const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
 const static float NEAR = 0.1f;
@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
 	}
 	else if (SPLIT) {
 		TEXTURE_PATH = "res/Textures/split.png";
-		if (!OBJ_PATH) OBJ_PATH = "res/gem.obj";
+		if (!OBJ_PATH) OBJ_PATH = "res/teeth.obj";
 		CAMERA_POS = glm::vec3(0, 0, 40);
 		REFLECTIVITY = 0.8f;
 		SHINE_DAMPER = 0.6f;
@@ -182,7 +182,6 @@ int main(int argc, char** argv) {
 	/// SLICING OF THE MESH IN THE CASE OF A SPLIT MESH ///
 	if (SPLIT) {
 		splitter.splitMeshIntoRubik();
-		//splitter.splitSingleSide(glm::vec3(0, 0, -1), 0);
 	}
 
 	for (splr::MeshData mesh : splitter.getMeshes()) {
@@ -273,6 +272,22 @@ int main(int argc, char** argv) {
 		if (glfwGetKey(window->getWindow(), GLFW_KEY_BACKSPACE) && frame % 5 == 0 && !cube.isSolving()) {
 			cube.mix();
 			frame = 0;
+		}
+
+		/* Zoom in, zoom out (Have it be a wheel scroll) */
+		if (glfwGetKey(window->getWindow(), GLFW_KEY_UP)) {
+			CAMERA_POS -= glm::vec3(0, 0, 2);
+			cam.createView(CAMERA_POS, glm::vec3(0), glm::vec3(0, 1, 0));
+
+			glm::mat4 viewProjection = cam.getVP();
+			glUniformMatrix4fv(vpLocation, 1, GL_FALSE, &viewProjection[0][0]);
+		}
+		else if (glfwGetKey(window->getWindow(), GLFW_KEY_DOWN)) {
+			CAMERA_POS += glm::vec3(0, 0, 2);
+			cam.createView(CAMERA_POS, glm::vec3(0), glm::vec3(0, 1, 0));
+
+			glm::mat4 viewProjection = cam.getVP();
+			glUniformMatrix4fv(vpLocation, 1, GL_FALSE, &viewProjection[0][0]);
 		}
 
 		/* Display cubestate */

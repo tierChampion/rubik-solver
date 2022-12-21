@@ -56,7 +56,8 @@ namespace splr {
 		halves[0] = MeshData();
 		halves[1] = MeshData();
 
-		std::vector<Vertex> border;
+		// TODO seems to be ok with morton codes
+		CyclicBorder cycle(planeNorm);
 
 		for (int v = 0; v < original.size(); v += 3) {
 			// for each triangle
@@ -87,19 +88,19 @@ namespace splr {
 			else if (dists.positives.size() == dists.negatives.size()) {
 				// one corner on the plane and the other two on each sides
 
-				splitTriInHalf(meshId, v, halves, border,
-					planeNorm, dists);
+				splitTriInHalf(meshId, v, halves,
+					planeNorm, dists, cycle);
 			}
 			else {
 				// two corners are on one side and the other one is on the other side
-				splitTriInThree(meshId, v, halves, border,
-					planeNorm, dists);
+				splitTriInThree(meshId, v, halves,
+					planeNorm, dists, cycle);
 			}
 		}
 		// ear trimming to triangulate the face
-		if (!border.empty()) {
+		if (!cycle.isEmpty()) {
 
-			triangulateFace(halves, border, planeNorm);
+			triangulateFace(halves, planeNorm, cycle);
 		}
 
 		return halves;
@@ -124,8 +125,7 @@ namespace splr {
 	}
 
 	void MeshSplitter::splitTriInHalf(int meshId, int triId, std::vector<MeshData>& halves,
-		std::vector<Vertex>& border, const glm::vec3 planeNorm,
-		const DistancesArray& dists) const {
+		const glm::vec3 planeNorm, const DistancesArray& dists, CyclicBorder& cycle) const {
 
 		MeshData mesh = _meshes[meshId];
 
@@ -159,14 +159,13 @@ namespace splr {
 		* When the triangle is very slim and there is only one intersection.
 		*/
 		if (intersection != mesh[start + triId]) {
-			border.push_back(intersection);
-			border.push_back(mesh[start + triId]);
+
+			cycle.appendEdge(intersection, mesh[start + triId]);
 		}
 	}
 
 	void MeshSplitter::splitTriInThree(int meshId, int triId, std::vector<MeshData>& halves,
-		std::vector<Vertex>& border, const glm::vec3 planeNorm,
-		const DistancesArray& dists) const {
+		const glm::vec3 planeNorm, const DistancesArray& dists, CyclicBorder& cycle) const {
 
 		MeshData mesh = _meshes[meshId];
 
@@ -210,8 +209,8 @@ namespace splr {
 		* When the triangle is very slim and there is only one intersection.
 		*/
 		if (inter1 != inter2) {
-			border.push_back(inter2);
-			border.push_back(inter1);
+
+			cycle.appendEdge(inter1, inter2);
 		}
 	}
 }

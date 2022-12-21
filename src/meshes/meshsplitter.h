@@ -2,8 +2,14 @@
 
 #include "loader.h"
 #include <glm/gtc/random.hpp>
+#include <glm/gtx/component_wise.hpp>
+#include <map>
 
 namespace splr {
+
+	static const glm::vec3 INFINITE_CAMERA_POS = glm::vec3(0, 0, 100);
+
+	int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact = false);
 
 	struct DistancesArray {
 		std::vector<uint8_t> zeros;
@@ -11,11 +17,44 @@ namespace splr {
 		std::vector<uint8_t> negatives;
 	};
 
+	class CyclicBorder {
+
+		int _desiredWinding;
+		glm::vec3 _cycleNormal;
+		int _axis;
+
+		std::vector<Vertex> _rawVerts;
+		std::map<Vertex, std::vector<Vertex>> _rawEdges;
+		std::vector<Vertex> _cycle;
+
+	public:
+
+		CyclicBorder(const glm::vec3 planeNorm);
+		void appendEdge(const Vertex& v1, const Vertex& v2);
+		void buildBorder(std::vector<MeshData>& halves);
+
+		bool isEmpty() const {
+			return _rawVerts.size() == 0 && _cycle.size() == 0;
+		}
+
+		int cycleSize() const {
+			return _cycle.size();
+		}
+
+		Vertex operator[](int i) const {
+			return _cycle[i];
+		}
+
+	private:
+
+		void findWinding();
+
+	};
+
 	static const float SPLIT_PLANE_DIST = 1;
 	static const int CUBIE_COUNT = 26;
 
-	// TODO add a debug single split function
-
+	// add a border map to get the edges and the verts
 	class MeshSplitter {
 
 		std::vector<MeshData> _meshes;
@@ -58,28 +97,18 @@ namespace splr {
 
 		Vertex getPlaneEdgeIntersection(const glm::vec3 planeNorm, const Vertex& v1, const Vertex& v2) const;
 
-		void splitTriInHalf(int meshId, int tri, std::vector<MeshData>& halves,
-			std::vector<Vertex>& border, const glm::vec3 planeNorm,
-			const DistancesArray& dists) const;
+		void splitTriInHalf(int meshId, int triId, std::vector<MeshData>& halves,
+			const glm::vec3 planeNorm, const DistancesArray& dists, CyclicBorder& cycle) const;
 
-		void splitTriInThree(int meshId, int tri, std::vector<MeshData>& halves,
-			std::vector<Vertex>& border, const glm::vec3 planeNorm,
-			const DistancesArray& dists) const;
+		void splitTriInThree(int meshId, int triId, std::vector<MeshData>& halves,
+			const glm::vec3 planeNorm, const DistancesArray& dists, CyclicBorder& cycle) const;
 
 		///
 		/// FACE RECONSTRUCTION
 		/// 
 
-		void triangulateFace(std::vector<MeshData>& halves,
-			std::vector<Vertex>& border, const glm::vec3 planeNorm) const;
-
-		int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact = false) const;
-
-		std::vector<Vertex> buildCyclicBorder(std::vector<MeshData>& halves, std::vector<Vertex>& border,
-			const glm::vec3 planeNorm, int desiredWinding) const;
-
-		void findWinding(std::vector<Vertex>& border,
-			std::vector<Vertex>& cyclic, const glm::vec3 planeNorm, int planeAxis, int desiredWinding) const;
+		void triangulateFace(std::vector<MeshData>& halves, const glm::vec3 planeNorm,
+			CyclicBorder& cycle) const;
 
 		///
 		/// EXPERIMENTAL PART OF TRIANGULATION (STILL VERY BUGGY)
