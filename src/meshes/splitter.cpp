@@ -22,7 +22,7 @@ namespace splr {
 				splr::MeshData negative = _meshes.back();
 
 				split = splitMeshAlongPlane(_meshes.size() - 1, _planeNormals[i]);
-				//negative.splitMeshAlongPlane(_planeNormals[i], 1);
+
 				_meshes.pop_back();
 
 				_meshes.push_back(split[1]);
@@ -100,7 +100,7 @@ namespace splr {
 		// ear trimming to triangulate the face
 		if (!cycle.isEmpty()) {
 
-			triangulateFace(halves, planeNorm, cycle);
+			triangulateFace(halves, cycle);
 		}
 
 		return halves;

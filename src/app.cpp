@@ -36,7 +36,7 @@ const static char* W_TITLE = "Rubik's cube solver";
 static bool FULL_SCREEN = false;
 
 static bool MIRROR = false;
-static bool SPLIT = true;
+static bool SPLIT = false;
 const static float FOV = 30.0f;
 const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
 const static float NEAR = 0.1f;
@@ -73,6 +73,9 @@ bool initGLFW() {
 
 int main(int argc, char** argv) {
 
+	// Random seed
+	srand(time(NULL));
+
 	const char* TEXTURE_PATH = nullptr;
 	const char* OBJ_PATH = nullptr;
 	float REFLECTIVITY;
@@ -106,8 +109,11 @@ int main(int argc, char** argv) {
 				SPLIT = true;
 				MIRROR = false;
 
-				arg = std::string_view(argv[++i]);
-				OBJ_PATH = arg.data();
+				if (i + 1 < argc) {
+					arg = std::string_view(argv[++i]);
+					std::cout << arg << std::endl;
+					OBJ_PATH = arg.data();
+				}
 			}
 			else if (arg == "--fullscreen" || arg == "-fs") {
 				FULL_SCREEN = true;
@@ -146,7 +152,7 @@ int main(int argc, char** argv) {
 	}
 	else if (SPLIT) {
 		TEXTURE_PATH = "res/Textures/split.png";
-		if (!OBJ_PATH) OBJ_PATH = "res/teeth.obj";
+		if (!OBJ_PATH) OBJ_PATH = "res/shifted_cube.obj";
 		CAMERA_POS = glm::vec3(0, 0, 40);
 		REFLECTIVITY = 0.8f;
 		SHINE_DAMPER = 0.6f;
@@ -158,7 +164,6 @@ int main(int argc, char** argv) {
 		REFLECTIVITY = 0.0f;
 		SHINE_DAMPER = 5.0f;
 	}
-
 
 	initGLFW();
 	initGL();
@@ -225,7 +230,8 @@ int main(int argc, char** argv) {
 
 	/* Callbacks for controls. */
 	glfwSetKeyCallback(window->getWindow(), Keyboard::turningCube_KeyCallback);
-	glfwSetMouseButtonCallback(window->getWindow(), Mouse::mousebuttonCallback);
+	glfwSetMouseButtonCallback(window->getWindow(), Mouse::mouseButtonCallback);
+	glfwSetScrollCallback(window->getWindow(), Mouse::mouseScrollCallback);
 
 	/* Control information */
 	std::cout << "\n=== Controls ===\n"
@@ -236,7 +242,9 @@ int main(int argc, char** argv) {
 		<< "<Others>\n"
 		<< "	Enter(Solve the cube)\n"
 		<< "	Backspace(Scramble the cube)\n"
-		<< "	Left click drag(Turn the cube)\n" << std::endl;
+		<< "	Left Click Drag(Turn the cube)\n"
+		<< "	Up and Down Arrows or Mouse scroll (Zoom in/out)\n"
+		<< std::endl;
 
 	SDK_CHECK_ERROR_GL();
 
@@ -251,8 +259,8 @@ int main(int argc, char** argv) {
 
 		/* Mouse controls <Whole cube orientation> */
 		Mouse::update(window->getWindow());
-		glm::vec2 delta = Mouse::getDelta();
-		if (delta[0] != 0 && delta[1] != 0)
+		glm::vec2 delta = Mouse::getDrag();
+		if (delta != glm::vec2(0.0f))
 			cube.turnCube(delta);
 
 		/* Keyboard controls <Face turning, mixing and solving> */
@@ -274,15 +282,18 @@ int main(int argc, char** argv) {
 			frame = 0;
 		}
 
+		float scroll = Mouse::getScroll();
+
 		/* Zoom in, zoom out (Have it be a wheel scroll) */
-		if (glfwGetKey(window->getWindow(), GLFW_KEY_UP)) {
+		if (glfwGetKey(window->getWindow(), GLFW_KEY_UP) || scroll > 0) {
+
 			CAMERA_POS -= glm::vec3(0, 0, 2);
 			cam.createView(CAMERA_POS, glm::vec3(0), glm::vec3(0, 1, 0));
 
 			glm::mat4 viewProjection = cam.getVP();
 			glUniformMatrix4fv(vpLocation, 1, GL_FALSE, &viewProjection[0][0]);
 		}
-		else if (glfwGetKey(window->getWindow(), GLFW_KEY_DOWN)) {
+		else if (glfwGetKey(window->getWindow(), GLFW_KEY_DOWN) || scroll < 0) {
 			CAMERA_POS += glm::vec3(0, 0, 2);
 			cam.createView(CAMERA_POS, glm::vec3(0), glm::vec3(0, 1, 0));
 

@@ -1,54 +1,14 @@
 #pragma once
 
 #include "loader.h"
-#include <glm/gtc/random.hpp>
-#include <glm/gtx/component_wise.hpp>
-#include <map>
+#include "cyclic.h"
 
 namespace splr {
-
-	static const glm::vec3 INFINITE_CAMERA_POS = glm::vec3(0, 0, 100);
-
-	int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact = false);
 
 	struct DistancesArray {
 		std::vector<uint8_t> zeros;
 		std::vector<uint8_t> positives;
 		std::vector<uint8_t> negatives;
-	};
-
-	class CyclicBorder {
-
-		int _desiredWinding;
-		glm::vec3 _cycleNormal;
-		int _axis;
-
-		std::vector<Vertex> _rawVerts;
-		std::map<Vertex, std::vector<Vertex>> _rawEdges;
-		std::vector<Vertex> _cycle;
-
-	public:
-
-		CyclicBorder(const glm::vec3 planeNorm);
-		void appendEdge(const Vertex& v1, const Vertex& v2);
-		void buildBorder(std::vector<MeshData>& halves);
-
-		bool isEmpty() const {
-			return _rawVerts.size() == 0 && _cycle.size() == 0;
-		}
-
-		int cycleSize() const {
-			return _cycle.size();
-		}
-
-		Vertex operator[](int i) const {
-			return _cycle[i];
-		}
-
-	private:
-
-		void findWinding();
-
 	};
 
 	static const float SPLIT_PLANE_DIST = 1;
@@ -107,16 +67,14 @@ namespace splr {
 		/// FACE RECONSTRUCTION
 		/// 
 
-		void triangulateFace(std::vector<MeshData>& halves, const glm::vec3 planeNorm,
-			CyclicBorder& cycle) const;
+		void triangulateFace(std::vector<MeshData>& halves, CyclicBorder& cycle) const;
 
 		///
 		/// EXPERIMENTAL PART OF TRIANGULATION (STILL VERY BUGGY)
 		/// 
 
-		void earTrimming(std::vector<MeshData>& halves, std::vector<Vertex>& cyclic,
-			const glm::vec3 planeNorm, int desiredWinding) const;
-		bool isEar(const std::vector<Vertex>& cyclic, int earId, int planeAxis, int desiredWinding) const;
+		void earTrimming(std::vector<MeshData>& halves, CyclicBorder& cycle) const;
+		bool isEar(CyclicBorder& cycle, int earId) const;
 		double triArea(const glm::vec3 p0, const glm::vec3 p1, const glm::vec3 p2, int x, int y) const;
 	};
 }
