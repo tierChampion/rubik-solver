@@ -3,6 +3,7 @@
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtx/component_wise.hpp>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <vector>
@@ -12,54 +13,75 @@
 
 namespace splr {
 
-	inline bool approximates(const glm::vec3& v1, const glm::vec3& v2) {
-		static const float delta = 0.002f;
+	inline bool isNearZero(const glm::vec3& v) {
+		// precision
+		static const float delta = 0.0001f;
 
-		glm::vec3 diff = v1 - v2;
+		return std::fabsf(glm::compMax(v)) < delta &&
+			std::fabsf(glm::compMin(v)) < delta;
 
-		return std::abs(diff.x) < delta &&
-			std::abs(diff.y) < delta &&
-			std::abs(diff.z) < delta;
 	}
 
 	struct Vertex {
 
-		glm::vec3 p;
-		glm::vec2 uv;
-		glm::vec3 n;
+		glm::vec3 _p;
+		glm::vec2 _uv;
+		glm::vec3 _n;
+		uint32_t _id = -1;
 
-		Vertex(const glm::vec3 p, const glm::vec2 uv, const glm::vec3 n) : p(p), uv(uv), n(n) {}
+		Vertex(const glm::vec3 p, const glm::vec2 uv, const glm::vec3 n) : _p(p), _uv(uv), _n(n) {}
+
+		void setId(uint32_t mort) {
+			_id = mort;
+		}
 
 		bool operator==(const Vertex& v) const {
 
-			return approximates(this->p, v.p);
+			return isNearZero(this->_p - v._p);
 		}
 
 		bool operator!=(const Vertex& v) const {
 			return !(*this == v);
 		}
+
+		bool operator<(const Vertex& v) const {
+
+			if (*this == v) {
+				return false;
+			}
+
+			return this->_id < v._id;
+		}
+
+		bool exactlyEquals(const Vertex& v) const {
+			return this->_p == v._p;
+		}
+
+		void print() const {
+			std::cout << _p[0] << " " << _p[1] << " " << _p[2] << std::endl;
+		}
 	};
 
 	struct MeshData {
 
-		std::vector<glm::vec3> pos;
-		std::vector<glm::vec2> uvs;
-		std::vector<glm::vec3> norms;
+		std::vector<glm::vec3> _pos;
+		std::vector<glm::vec2> _uvs;
+		std::vector<glm::vec3> _norms;
 
 		MeshData() {}
 
 		void append(const Vertex vert) {
-			pos.push_back(vert.p);
-			uvs.push_back(vert.uv);
-			norms.push_back(vert.n);
+			_pos.push_back(vert._p);
+			_uvs.push_back(vert._uv);
+			_norms.push_back(vert._n);
 		}
 
 		Vertex operator[](int i) const {
-			return Vertex(pos[i], uvs[i], norms[i]);
+			return Vertex(_pos[i], _uvs[i], _norms[i]);
 		}
 
 		int size() const {
-			return pos.size();
+			return _pos.size();
 		}
 	};
 

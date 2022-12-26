@@ -3,9 +3,10 @@
 #include "glfw3.h"
 #include "glm/vec2.hpp"
 
-static glm::vec2 _delta;
+static glm::vec2 _deltaPos;
 static glm::vec2 _lastPos;
-static bool _activeDrag;
+static float _totalScroll = 0;
+static bool _activeDrag = false;
 
 /**
 * GLFW mouse controller.
@@ -14,10 +15,11 @@ class Mouse {
 
 public:
 
-	inline static void mousebuttonCallback(GLFWwindow* window, int button, int action, int mods);
+	inline static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+	inline static void mouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 	inline static void update(GLFWwindow* window);
-	inline static glm::vec2 getDelta();
-
+	inline static glm::vec2 getDrag();
+	inline static float getScroll();
 };
 
 /**
@@ -26,7 +28,7 @@ public:
 * @param button - button that is modified by the event
 * @param action - action done to the button
 */
-inline void Mouse::mousebuttonCallback(GLFWwindow* window, int button, int action, int mods) {
+inline void Mouse::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 
 	if (button == GLFW_MOUSE_BUTTON_1) {
 
@@ -42,11 +44,16 @@ inline void Mouse::mousebuttonCallback(GLFWwindow* window, int button, int actio
 		}
 		else if (action == GLFW_RELEASE && _activeDrag) {
 			_activeDrag = false;
-			_delta = glm::vec2(0);
+			_deltaPos = glm::vec2(0);
 		}
 
 	}
 
+}
+
+inline void Mouse::mouseScrollCallback(GLFWwindow* window, double xOffset, double yOffset)
+{
+	_totalScroll += yOffset;
 }
 
 /**
@@ -61,7 +68,7 @@ inline void Mouse::update(GLFWwindow* window) {
 
 	if (x != NULL && y != NULL) {
 		glm::vec2 newPos(x, y);
-		_delta = newPos - _lastPos;
+		_deltaPos = newPos - _lastPos;
 		_lastPos = newPos;
 	}
 }
@@ -69,6 +76,17 @@ inline void Mouse::update(GLFWwindow* window) {
 /**
 * Getter for the distance change between frames.
 */
-inline glm::vec2 Mouse::getDelta() {
-	return _delta;
+inline glm::vec2 Mouse::getDrag() {
+	return _deltaPos;
+}
+
+/**
+* Getter for the scroll change between frames.
+*/
+inline float Mouse::getScroll() {
+
+	float ret = _totalScroll;
+	_totalScroll = 0;
+
+	return ret;
 }

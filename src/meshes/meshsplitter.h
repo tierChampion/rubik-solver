@@ -1,6 +1,7 @@
 #pragma once
 
 #include "loader.h"
+#include "cyclic.h"
 
 namespace splr {
 
@@ -11,7 +12,9 @@ namespace splr {
 	};
 
 	static const float SPLIT_PLANE_DIST = 1;
+	static const int CUBIE_COUNT = 26;
 
+	// add a border map to get the edges and the verts
 	class MeshSplitter {
 
 		std::vector<MeshData> _meshes;
@@ -33,10 +36,16 @@ namespace splr {
 		}
 
 		std::vector<MeshData>& getMeshes() {
+
+			if (_meshes.size() != CUBIE_COUNT) {
+				_meshes.resize(CUBIE_COUNT);
+			}
+
 			return _meshes;
 		}
 
 		void splitMeshIntoRubik();
+		void splitSingleSide(const glm::vec3 planeNorm, int section);
 
 	private:
 
@@ -48,37 +57,24 @@ namespace splr {
 
 		Vertex getPlaneEdgeIntersection(const glm::vec3 planeNorm, const Vertex& v1, const Vertex& v2) const;
 
-		void splitTriInHalf(int meshId, int tri, std::vector<MeshData>& halves,
-			std::vector<Vertex>& border, const glm::vec3 planeNorm,
-			const DistancesArray& dists) const;
+		void splitTriInHalf(int meshId, int triId, std::vector<MeshData>& halves,
+			const glm::vec3 planeNorm, const DistancesArray& dists, CyclicBorder& cycle) const;
 
-		void splitTriInThree(int meshId, int tri, std::vector<MeshData>& halves,
-			std::vector<Vertex>& border, const glm::vec3 planeNorm,
-			const DistancesArray& dists) const;
+		void splitTriInThree(int meshId, int triId, std::vector<MeshData>& halves,
+			const glm::vec3 planeNorm, const DistancesArray& dists, CyclicBorder& cycle) const;
 
 		///
 		/// FACE RECONSTRUCTION
 		/// 
 
-		void triangulateFace(std::vector<MeshData>& halves,
-			std::vector<Vertex>& border, const glm::vec3 planeNorm) const;
-
-		int isCCW(const glm::vec3& p,
-			const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact = false) const;
-
-		std::vector<Vertex> buildCyclicBorder(std::vector<MeshData>& halves, std::vector<Vertex>& border,
-			const glm::vec3 planeNorm, int desiredWinding) const;
-
-		void findWinding(std::vector<Vertex>& border,
-			std::vector<Vertex>& cyclic, const glm::vec3 planeNorm, int planeAxis, int desiredWinding) const;
+		void triangulateFace(std::vector<MeshData>& halves, CyclicBorder& cycle) const;
 
 		///
 		/// EXPERIMENTAL PART OF TRIANGULATION (STILL VERY BUGGY)
 		/// 
 
-		void earTrimming(std::vector<MeshData>& halves, std::vector<Vertex>& cyclic,
-			const glm::vec3 planeNorm, int desiredWinding) const;
-		bool isEar(const std::vector<Vertex>& cyclic, int earId, int planeAxis, int desiredWinding) const;
+		void earTrimming(std::vector<MeshData>& halves, CyclicBorder& cycle) const;
+		bool isEar(CyclicBorder& cycle, int earId) const;
 		double triArea(const glm::vec3 p0, const glm::vec3 p1, const glm::vec3 p2, int x, int y) const;
 	};
 }
