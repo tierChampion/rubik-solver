@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
 					<< "--mirror | -m		Use a mirror cube instead of a regular rubiks cube\n"
 					<< "--split | -s		Use an obj file in the res directory as the shape of the whole cube "
 					<< "which is then sliced into the cubies.\n"
-					<< "					Defaults to \"ghost.obj\"\n"
+					<< "				Defaults to \"ghost.obj\"\n"
 					<< "				All the information for a valid mesh is "
 					<< "described in the readme in the section \"Conditions for slicing\".\n"
 					<< "--fullscreen | -fs	Display in full screen\n" << std::endl;
