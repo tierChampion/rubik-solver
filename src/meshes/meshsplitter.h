@@ -12,7 +12,7 @@ namespace splr {
 	};
 
 	static const float SPLIT_PLANE_DIST = 1;
-	static const int CUBIE_COUNT = 26;
+	static const int CUBIE_COUNT = 27;
 
 	// add a border map to get the edges and the verts
 	class MeshSplitter {

@@ -1,6 +1,7 @@
 #include "model.h";
 
 namespace rubik {
+
 	/**
 	* Initializes the model of the rubiks cube and its 26 cubies.
 	* Can be the regular cube or the mirror cube.
@@ -15,14 +16,12 @@ namespace rubik {
 		for (int x = 0; x < DIMENSION; x++) {
 			for (int y = 0; y < DIMENSION; y++) {
 				for (int z = 0; z < DIMENSION; z++) {
-					if (x != 1 || y != 1 || z != 1) _cubies.push_back(CubieModel(x, y, z, scale, splitted));
-
+					_cubies.push_back(CubieModel(x, y, z, scale, splitted));
 				}
 			}
 		}
 
 		_quaternion = glm::quat(glm::vec3(0, 0, 0));
-		_steps = 10;
 		_currentStep = 0;
 		_splitted = splitted;
 	}
@@ -67,14 +66,14 @@ namespace rubik {
 			glm::vec4 axisAngle = _moves.front().toAxisAngle();
 
 			glm::vec3 axis = glm::vec3(axisAngle[0], axisAngle[1], axisAngle[2]);
-			float theta = axisAngle[3] / _steps;
+			float theta = axisAngle[3] / _FRAME_PER_MOVES;
 
 			for (int target : _targets.front()) {
 				_cubies[target].turn(theta, axis);
 			}
 
 			_currentStep++;
-			if (_currentStep == _steps) {
+			if (_currentStep == _FRAME_PER_MOVES) {
 				_currentStep = 0;
 				_moves.pop();
 
@@ -117,7 +116,6 @@ namespace rubik {
 		glm::quat xRotation = glm::angleAxis(glm::radians(delta[1]), rightAxis);
 
 		_quaternion = glm::normalize(_quaternion * (xRotation * yRotation));
-
 	}
 
 	/**

@@ -111,24 +111,22 @@ int main(int argc, char** argv) {
 
 				if (i + 1 < argc) {
 					arg = std::string_view(argv[++i]);
-					std::cout << arg << std::endl;
+					std::cout << "Mesh used: " << arg << "\n" << std::endl;
 					OBJ_PATH = arg.data();
 				}
 			}
 			else if (arg == "--fullscreen" || arg == "-fs") {
 				FULL_SCREEN = true;
 			}
-			else if (arg == "/?") {
+			else if (arg == "/?" || arg == "--help" || arg == "-h" || arg == "-?") {
 
 				std::cout << "[--mirror | -m] [--split | -s] [-fullscreen | -fs]\n"
-					<< "--mirror | -m		Use a mirror cube instead of rubiks cube\n"
-					<< "--split | -s		Use an obj file in the project directory as the shape of the whole cube "
-					<< "which is then split into the cubies.\n"
-					<< "				This is still experimental, "
-					<< "so using a very simple convex shape is strongly recommended.\n"
-					<< "			You may use the blender project in this project to test a mesh.\n"
-					<< "				For a mesh to be fully supported, all the faces of the cubies should be a single convex polygon with no holes.\n"
-					<< "				Faces with big concavities have a strong chance to have extra geometry on them.\n"
+					<< "--mirror | -m		Use a mirror cube instead of a regular rubiks cube\n"
+					<< "--split | -s		Use an obj file in the res directory as the shape of the whole cube "
+					<< "which is then sliced into the cubies.\n"
+					<< "					Defaults to \"ghost.obj\"\n"
+					<< "				All the information for a valid mesh is "
+					<< "described in the readme in the section \"Conditions for slicing\".\n"
 					<< "--fullscreen | -fs	Display in full screen\n" << std::endl;
 				exit(0);
 			}
@@ -144,22 +142,22 @@ int main(int argc, char** argv) {
 
 	/// PARAMETER SETTINGS ///
 	if (MIRROR) {
-		TEXTURE_PATH = "res/Textures/mirror.png";
-		OBJ_PATH = "res/cubie.obj";
+		TEXTURE_PATH = "mirror.png";
+		OBJ_PATH = "cubie.obj";
 		CAMERA_POS = glm::vec3(0, 0, 30);
 		REFLECTIVITY = 0.8f;
 		SHINE_DAMPER = 5.0f;
 	}
 	else if (SPLIT) {
-		TEXTURE_PATH = "res/Textures/split.png";
-		if (!OBJ_PATH) OBJ_PATH = "res/ghost.obj";
+		TEXTURE_PATH = "split.png";
+		if (!OBJ_PATH) OBJ_PATH = "ghost.obj";
 		CAMERA_POS = glm::vec3(0, 0, 40);
 		REFLECTIVITY = 0.8f;
 		SHINE_DAMPER = 0.6f;
 	}
 	else {
-		TEXTURE_PATH = "res/Textures/cubie.png";
-		OBJ_PATH = "res/cubie.obj";
+		TEXTURE_PATH = "cubie.png";
+		OBJ_PATH = "cubie.obj";
 		CAMERA_POS = glm::vec3(0, 0, 30);
 		REFLECTIVITY = 0.0f;
 		SHINE_DAMPER = 5.0f;
@@ -172,7 +170,7 @@ int main(int argc, char** argv) {
 	stbi_set_flip_vertically_on_load(1);
 
 	/* Creation of the texture. */
-	Texture img((PROJ_PATH + TEXTURE_PATH).c_str());
+	Texture img((PROJ_PATH + "res/Textures/" + TEXTURE_PATH).c_str());
 	img.passToOpenGL();
 	img.bind(0);
 
@@ -180,7 +178,11 @@ int main(int argc, char** argv) {
 	std::vector<Vao> vaos;
 
 	splr::MeshData originalMesh;
-	splr::loadObj((PROJ_PATH + OBJ_PATH).c_str(), originalMesh);
+	bool found = splr::loadObj((PROJ_PATH + "res/" + OBJ_PATH).c_str(), originalMesh);
+
+	if (!found) {
+		std::cerr << "ERROR: The mesh file " << OBJ_PATH << " could not be opened." << std::endl;
+	}
 
 	splr::MeshSplitter splitter(originalMesh);
 

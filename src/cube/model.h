@@ -58,7 +58,7 @@ namespace rubik {
 		glm::quat _quaternion;
 		std::queue<Move> _moves;
 		std::queue<std::vector<int>> _targets;
-		int _steps;
+		static const int _FRAME_PER_MOVES = 10;
 		int _currentStep;
 		std::vector<CubieModel> _cubies;
 		bool _splitted;

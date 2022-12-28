@@ -29,9 +29,6 @@ namespace splr {
 				_meshes.push_back(split[0]);
 			}
 		}
-
-		// Remove the center mesh
-		_meshes.erase(_meshes.begin() + 13);
 	}
 
 	void MeshSplitter::splitSingleSide(const glm::vec3 planeNorm, int section) {
