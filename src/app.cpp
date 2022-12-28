@@ -74,7 +74,7 @@ bool initGLFW() {
 int main(int argc, char** argv) {
 
 	// Random seed
-	srand(time(NULL));
+	//srand(time(NULL));
 
 	const char* TEXTURE_PATH = nullptr;
 	const char* OBJ_PATH = nullptr;
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
 	}
 	else if (SPLIT) {
 		TEXTURE_PATH = "res/Textures/split.png";
-		if (!OBJ_PATH) OBJ_PATH = "res/shifted_cube.obj";
+		if (!OBJ_PATH) OBJ_PATH = "res/ghost.obj";
 		CAMERA_POS = glm::vec3(0, 0, 40);
 		REFLECTIVITY = 0.8f;
 		SHINE_DAMPER = 0.6f;
@@ -259,9 +259,9 @@ int main(int argc, char** argv) {
 
 		/* Mouse controls <Whole cube orientation> */
 		Mouse::update(window->getWindow());
-		glm::vec2 delta = Mouse::getDrag();
-		if (delta != glm::vec2(0.0f))
-			cube.turnCube(delta);
+		glm::vec2 drag = Mouse::getDrag();
+		if (drag != glm::vec2(0.0f))
+			cube.turnCube(drag);
 
 		/* Keyboard controls <Face turning, mixing and solving> */
 		rubik::Move input = Keyboard::getMove(window->getWindow());
@@ -284,7 +284,7 @@ int main(int argc, char** argv) {
 
 		float scroll = Mouse::getScroll();
 
-		/* Zoom in, zoom out (Have it be a wheel scroll) */
+		/* Zoom in */
 		if (glfwGetKey(window->getWindow(), GLFW_KEY_UP) || scroll > 0) {
 
 			CAMERA_POS -= glm::vec3(0, 0, 2);
@@ -293,6 +293,7 @@ int main(int argc, char** argv) {
 			glm::mat4 viewProjection = cam.getVP();
 			glUniformMatrix4fv(vpLocation, 1, GL_FALSE, &viewProjection[0][0]);
 		}
+		/* Zoom out */
 		else if (glfwGetKey(window->getWindow(), GLFW_KEY_DOWN) || scroll < 0) {
 			CAMERA_POS += glm::vec3(0, 0, 2);
 			cam.createView(CAMERA_POS, glm::vec3(0), glm::vec3(0, 1, 0));

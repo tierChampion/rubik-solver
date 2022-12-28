@@ -9,13 +9,14 @@ namespace splr {
 
 	static const glm::vec3 INFINITE_CAMERA_POS = glm::vec3(0, 0, 100);
 
-	int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact = false);
+	int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2);
 
 	class CyclicBorder {
 
 		int _desiredWinding;
 		glm::vec3 _cycleNormal;
 		int _axis;
+		glm::ivec2 _flatCoords;
 
 		std::vector<Vertex> _verts;
 		std::map<Vertex, std::vector<Vertex>> _edges;
@@ -35,6 +36,14 @@ namespace splr {
 			_cycle.clear();
 		}
 
+		int getWinding() const {
+			return _desiredWinding;
+		}
+
+		glm::vec2 getPlaneCoordinates() const {
+			return _flatCoords;
+		}
+
 		int cycleSize() const {
 			return _cycle.size();
 		}
@@ -43,12 +52,20 @@ namespace splr {
 			return _verts.size();
 		}
 
+		int edgeCount() const {
+			return _edges.size();
+		}
+
 		glm::vec3 getNormal() const {
 			return _cycleNormal;
 		}
 
+		void remove(int i) {
+			_cycle.erase(_cycle.begin() + i);
+		}
+
 		Vertex operator[](int i) const {
-			return _cycle[i];
+			return _cycle[(i + _cycle.size()) % _cycle.size()];
 		}
 
 	private:

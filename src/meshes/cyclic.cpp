@@ -12,19 +12,19 @@ namespace splr {
 	* @param exact - Have the check be exact. Off by default
 	* @return whether the triangle is ccw
 	*/
-	int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2, bool exact) {
+	int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2) {
 
 		glm::vec3 triN = glm::cross(v1._p - v0._p,
 			v2._p - v0._p);
 
-		if (isNearZero(triN) && !exact
-			|| triN == glm::vec3(0.f)) return 0;
+		if (triN == glm::vec3(0.f)) return 0;
 
 		triN = glm::normalize(triN);
 
-		int otherTest = glm::dot(INFINITE_CAMERA_POS - v0._p, triN) >= 0 ? 1 : 2;
+		// Check if the normal faces the camera. If so, it is CCW.
+		int winding = glm::dot(INFINITE_CAMERA_POS - v0._p, triN) >= 0 ? 1 : 2;
 
-		return otherTest;
+		return winding;
 	}
 
 	/**
@@ -39,6 +39,7 @@ namespace splr {
 
 		// Coordinate to be removed from vertex to get to Plane Space
 		this->_axis = (planeNorm.y != 0) * 1 + (planeNorm.z != 0) * 2;
+		this->_flatCoords = glm::ivec2((_axis + 1) % 3, (_axis + 2) % 3);
 
 		// Winding that a convex vertex should have
 		this->_desiredWinding = (glm::dot(INFINITE_CAMERA_POS - planeNorm,
@@ -85,22 +86,6 @@ namespace splr {
 			// Add the edge in both directions.
 			_edges[_verts[i]].push_back(_verts[i + 1]);
 			_edges[_verts[i + 1]].push_back(_verts[i]);
-
-			//
-			// KNOWN BUG:
-			// 
-			// Sometimes in a single border, a vertices can have more than two edges.
-			// This suggests that the permieter is self intersecting or that there is
-			// a thin triangle dangling from those vertices.
-			// Either way, the cycle seems to form a good enough result for this not 
-			// to be a big issue.
-			//
-			// Code to detect these vertices:
-			// 
-			/*	if (_edges[_verts[i]].size() > 2 || _edges[_verts[i + 1]].size() > 2) {
-			*		std::cout << "whot self intersecting border" << std::endl;
-			*	}
-			*/
 		}
 	}
 
@@ -108,12 +93,6 @@ namespace splr {
 	* Construct the cyclic border from the known edges.
 	*/
 	void CyclicBorder::buildBorder() {
-
-		//
-		// TODOS:
-		// include vertices with more than 2 edges. Would need to reformat them in clean edges.
-		// not delete edges in other than clean edges, since it isn't needed
-		//
 
 		createEdges();
 		cleanEdges();
@@ -169,74 +148,74 @@ namespace splr {
 
 	/**
 	* Remove redundant edges from the cycle.
+	* TODO: Only modify edges and don't deal with verts
 	*/
 	void CyclicBorder::cleanEdges() {
 
-		for (int i = 0; i < _verts.size(); i++) {
+		bool progressed;
 
-			Vertex current = _verts[i];
-			std::vector<Vertex> neighbours = _edges[current];
+		// make it repeat until no more edges can be cleaned
+		do {
 
-			if (neighbours.size() == 2) {
+			progressed = false;
 
-				int flat = isCCW(neighbours[0], current, neighbours[1], true);
+			for (int i = 0; i < _verts.size(); i++) {
 
-				// Vertex is on a straight edge from neighbour#1 to neighbour#2.
-				// We can thus remove it and link neighbour#1 and neighbour#2.
-				if (flat == 0) {
+				Vertex current = _verts[i];
+				std::vector<Vertex> neighbours = _edges[current];
 
-					// Remove itself from edges
-					std::replace(_edges[neighbours[0]].begin(), _edges[neighbours[0]].end(),
-						current, neighbours[1]);
-					std::replace(_edges[neighbours[1]].begin(), _edges[neighbours[1]].end(),
-						current, neighbours[0]);
-					_edges.erase(current);
+				if (neighbours.size() == 2) {
 
-					// Replace itself in verts (optional, only usefull for debugging)
-					int pos1 = std::find(_verts.begin(), _verts.end(), neighbours[0]) -
-						_verts.begin();
-					int pos2 = std::find(_verts.begin(), _verts.end(), neighbours[1]) -
-						_verts.begin();
+					int flat = isCCW(neighbours[0], current, neighbours[1]);
 
-					if (pos1 < pos2) {
-						_verts[pos1 - 2 * (pos1 % 2) + 1] = neighbours[1];
+					// Vertex is on a straight edge from neighbour#1 to neighbour#2.
+					// We can thus remove it and link neighbour#1 and neighbour#2.
+					if (flat == 0) {
+
+						// Remove itself from edges
+						std::replace(_edges[neighbours[0]].begin(), _edges[neighbours[0]].end(),
+							current, neighbours[1]);
+						std::replace(_edges[neighbours[1]].begin(), _edges[neighbours[1]].end(),
+							current, neighbours[0]);
+						_edges.erase(current);
+
+						// Replace itself in verts
+						int pos1 = std::find(_verts.begin(), _verts.end(), neighbours[0]) -
+							_verts.begin();
+						int pos2 = std::find(_verts.begin(), _verts.end(), neighbours[1]) -
+							_verts.begin();
+
+						if (pos1 < pos2) {
+							_verts[pos1 - 2 * (pos1 % 2) + 1] = neighbours[1];
+						}
+						else {
+							_verts[pos2 - 2 * (pos2 % 2) + 1] = neighbours[0];
+						}
+
+						int posCurr = std::find(_verts.begin(), _verts.end(), current) -
+							_verts.begin();
+
+						if (posCurr > _verts.size()) {
+
+							// Erase the extra edge in vertices
+							_verts.erase(_verts.begin() + posCurr - (posCurr % 2),
+								_verts.begin() + posCurr - (posCurr % 2) + 2);
+
+						}
+
+						i--;
+
+						progressed = true;
 					}
-					else {
-						_verts[pos2 - 2 * (pos2 % 2) + 1] = neighbours[0];
-					}
-
-					int posCurr = std::find(_verts.begin(), _verts.end(), current) -
-						_verts.begin();
-
-					// Erase the extra edge in vertices
-					_verts.erase(_verts.begin() + posCurr - (posCurr % 2),
-						_verts.begin() + posCurr - (posCurr % 2) + 2);
-
-					i--;
 				}
 			}
-		}
-
-		// Remove empty edge lists
-		for (auto iter = _edges.begin(); iter != _edges.end(); iter++) {
-
-			if (iter->second.size() == 0) {
-
-				Vertex val = iter->first;
-
-				iter--;
-				_edges.erase(val);
-			}
-		}
+		} while (progressed);
 	}
 
 	/**
 	* Determine the orientation of the first vertex.
 	*/
 	void CyclicBorder::findWinding() {
-
-		int x = (_axis + 1) % 3;
-		int y = (_axis + 2) % 3;
 
 		int convex = 0;
 
@@ -248,8 +227,8 @@ namespace splr {
 
 			int convex = 0;
 
-			float maxA = _verts[0]._p[x] * dir[0] + _verts[0]._p[y] * dir[1];
-			float maxB = _verts[0]._p[x] * -dir[1] + _verts[0]._p[y] * dir[0];
+			float maxA = _verts[0]._p[_flatCoords[0]] * dir[0] + _verts[0]._p[_flatCoords[1]] * dir[1];
+			float maxB = _verts[0]._p[_flatCoords[0]] * -dir[1] + _verts[0]._p[_flatCoords[1]] * dir[0];
 
 			// Find the vertex which maximises the two dimensions. 
 			// It is necessarly a corner and convex.
@@ -257,8 +236,8 @@ namespace splr {
 
 				if (_verts[i] == _verts[convex]) continue;
 
-				float distA = _verts[i]._p[x] * dir[0] + _verts[i]._p[y] * dir[1];
-				float distB = _verts[i]._p[x] * -dir[1] + _verts[i]._p[y] * dir[0];
+				float distA = _verts[i]._p[_flatCoords[0]] * dir[0] + _verts[i]._p[_flatCoords[1]] * dir[1];
+				float distB = _verts[i]._p[_flatCoords[0]] * -dir[1] + _verts[i]._p[_flatCoords[1]] * dir[0];
 
 				if (distA > maxA || (distA == maxA && distB > maxB)) {
 					convex = i;

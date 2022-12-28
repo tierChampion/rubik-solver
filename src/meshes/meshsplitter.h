@@ -64,17 +64,17 @@ namespace splr {
 			const glm::vec3 planeNorm, const DistancesArray& dists, CyclicBorder& cycle) const;
 
 		///
-		/// FACE RECONSTRUCTION
+		/// FACE RECONSTRUCTION AND DIFFERENT TYPES OF TRIANGULATIONS
 		/// 
 
 		void triangulateFace(std::vector<MeshData>& halves, CyclicBorder& cycle) const;
-
-		///
-		/// EXPERIMENTAL PART OF TRIANGULATION (STILL VERY BUGGY)
-		/// 
-
+		void naiveTriangulation(std::vector<MeshData>& halves, CyclicBorder& cycle) const;
+		void debugTriangulation(std::vector<MeshData>& halves, const CyclicBorder& cycle,
+			int testIndex) const;
 		void earTrimming(std::vector<MeshData>& halves, CyclicBorder& cycle) const;
-		bool isEar(CyclicBorder& cycle, int earId) const;
-		double triArea(const glm::vec3 p0, const glm::vec3 p1, const glm::vec3 p2, int x, int y) const;
+
 	};
+
+	static float triArea(const glm::vec3 p0, const glm::vec3 p1, const glm::vec3 p2, glm::vec2 coords);
+	static bool isEar(const CyclicBorder& cycle, int earId);
 }
