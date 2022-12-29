@@ -36,7 +36,7 @@ const static char* W_TITLE = "Rubik's cube solver";
 static bool FULL_SCREEN = false;
 
 static bool MIRROR = false;
-static bool SPLIT = false;
+static bool SPLIT = true;
 const static float FOV = 30.0f;
 const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
 const static float NEAR = 0.1f;
@@ -74,7 +74,7 @@ bool initGLFW() {
 int main(int argc, char** argv) {
 
 	// Random seed
-	//srand(time(NULL));
+	srand(time(NULL));
 
 	const char* TEXTURE_PATH = nullptr;
 	const char* OBJ_PATH = nullptr;

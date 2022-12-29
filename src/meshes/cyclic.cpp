@@ -94,8 +94,11 @@ namespace splr {
 	*/
 	void CyclicBorder::buildBorder() {
 
+		// Find the edges
 		createEdges();
 		cleanEdges();
+
+		// Find two properly ordered edges
 		findWinding();
 
 		bool foundEdge;
@@ -148,21 +151,25 @@ namespace splr {
 
 	/**
 	* Remove redundant edges from the cycle.
-	* TODO: Only modify edges and don't deal with verts
 	*/
 	void CyclicBorder::cleanEdges() {
 
 		bool progressed;
 
-		// make it repeat until no more edges can be cleaned
+		// Keep on going until all useless vertices have been removed
 		do {
 
 			progressed = false;
 
-			for (int i = 0; i < _verts.size(); i++) {
+			int index = 0;
+			auto iter = _edges.begin();
 
-				Vertex current = _verts[i];
-				std::vector<Vertex> neighbours = _edges[current];
+			while (iter != _edges.end()) {
+
+				bool currentlyProgressed = false;
+
+				Vertex current = iter->first;
+				std::vector<Vertex> neighbours = iter->second;
 
 				if (neighbours.size() == 2) {
 
@@ -172,46 +179,29 @@ namespace splr {
 					// We can thus remove it and link neighbour#1 and neighbour#2.
 					if (flat == 0) {
 
-						// Remove itself from edges
+						// Link the two neighbours together and remove itself from edges
 						std::replace(_edges[neighbours[0]].begin(), _edges[neighbours[0]].end(),
 							current, neighbours[1]);
 						std::replace(_edges[neighbours[1]].begin(), _edges[neighbours[1]].end(),
 							current, neighbours[0]);
 						_edges.erase(current);
 
-						// Replace itself in verts
-						int pos1 = std::find(_verts.begin(), _verts.end(), neighbours[0]) -
-							_verts.begin();
-						int pos2 = std::find(_verts.begin(), _verts.end(), neighbours[1]) -
-							_verts.begin();
-
-						if (pos1 < pos2) {
-							_verts[pos1 - 2 * (pos1 % 2) + 1] = neighbours[1];
-						}
-						else {
-							_verts[pos2 - 2 * (pos2 % 2) + 1] = neighbours[0];
-						}
-
-						int posCurr = std::find(_verts.begin(), _verts.end(), current) -
-							_verts.begin();
-
-						if (posCurr > _verts.size()) {
-
-							// Erase the extra edge in vertices
-							_verts.erase(_verts.begin() + posCurr - (posCurr % 2),
-								_verts.begin() + posCurr - (posCurr % 2) + 2);
-
-						}
-
-						i--;
+						// Reset iterator to modified map
+						iter = std::next(_edges.begin(), index);
 
 						progressed = true;
+						currentlyProgressed = true;
 					}
+				}
+
+				// Only increment position in the map if no edges were removed
+				if (!currentlyProgressed) {
+					++index;
+					++iter;
 				}
 			}
 		} while (progressed);
 	}
-
 	/**
 	* Determine the orientation of the first vertex.
 	*/
