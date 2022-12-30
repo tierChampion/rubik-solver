@@ -71,6 +71,7 @@ namespace splr {
 	private:
 
 		void createEdges();
+		void mergeEdges();
 		void cleanEdges();
 		void findWinding();
 

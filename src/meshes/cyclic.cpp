@@ -95,8 +95,12 @@ namespace splr {
 	void CyclicBorder::buildBorder() {
 
 		// Find the edges
-		createEdges();
+		if (_edges.size() == 0) {
+			createEdges();
+		}
+
 		cleanEdges();
+		mergeEdges();
 
 		// Find two properly ordered edges
 		findWinding();
@@ -146,6 +150,23 @@ namespace splr {
 		// Make sure the cycle is continuous
 		if (_cycle.front() == _cycle.back()) {
 			_cycle.pop_back();
+		}
+
+		auto iter = _edges.begin();
+		int index = 0;
+
+		while (iter != _edges.end()) {
+
+			if (iter->second.size() == 0) {
+				_edges.erase(iter);
+
+				// Reset iterator to modified map
+				iter = std::next(_edges.begin(), index);
+			}
+			else {
+				index++;
+				++iter;
+			}
 		}
 	}
 
@@ -202,12 +223,70 @@ namespace splr {
 			}
 		} while (progressed);
 	}
+
+	/**
+	* Merge one edge vertices that are almost the same
+	*/
+	void CyclicBorder::mergeEdges() {
+
+		int counter = 0;
+		auto iter = _edges.begin();
+
+		while (iter != _edges.end()) {
+
+			Vertex current = iter->first;
+			std::vector<Vertex> neighbours = iter->second;
+
+			// Find single edge vertices
+			if (neighbours.size() == 1) {
+
+				auto brotherIter = std::next(_edges.begin(), counter + 1);
+
+				int brotherCounter = counter + 1;
+				int brother = counter + 1;
+				float minError = INFINITY;
+
+				while (brotherIter != _edges.end()) {
+
+					Vertex brotherVert = brotherIter->first;
+					std::vector<Vertex> brotherNeighbours = brotherIter->second;
+
+					// Find another single edge vertex
+					if (brotherNeighbours.size() == 1) {
+
+						float err = glm::length(current._p - brotherVert._p);
+
+						// New closest vertex
+						if (err < minError) {
+
+							brother = brotherCounter;
+							minError = err;
+						}
+					}
+
+					brotherCounter++;
+					++brotherIter;
+				}
+
+				// Merge the two brothers
+				brotherIter = std::next(_edges.begin(), brother);
+
+				neighbours.push_back(brotherIter->second[0]);
+
+				_edges.erase(brotherIter);
+
+				iter = std::next(_edges.begin(), counter);
+			}
+
+			counter++;
+			++iter;
+		}
+	}
+
 	/**
 	* Determine the orientation of the first vertex.
 	*/
 	void CyclicBorder::findWinding() {
-
-		int convex = 0;
 
 		bool foundConvex = false;
 

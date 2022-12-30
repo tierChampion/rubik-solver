@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
 	}
 	else if (SPLIT) {
 		TEXTURE_PATH = "split.png";
-		if (!OBJ_PATH) OBJ_PATH = "ghost.obj";
+		if (!OBJ_PATH) OBJ_PATH = "peanut.obj";
 		CAMERA_POS = glm::vec3(0, 0, 40);
 		REFLECTIVITY = 0.8f;
 		SHINE_DAMPER = 0.6f;
@@ -189,6 +189,9 @@ int main(int argc, char** argv) {
 	/// SLICING OF THE MESH IN THE CASE OF A SPLIT MESH ///
 	if (SPLIT) {
 		splitter.splitMeshIntoRubik();
+		//splitter.splitSingleSide(glm::vec3(1, 0, 0), 1);
+		//splitter.splitSingleSide(glm::vec3(0, 0, -1), 0);
+		//splitter.splitSingleSide(glm::vec3(0, 1, 0), 0);
 	}
 
 	for (splr::MeshData mesh : splitter.getMeshes()) {

@@ -12,11 +12,18 @@ namespace splr {
 	*/
 	void MeshSplitter::triangulateFace(std::vector<MeshData>& halves, CyclicBorder& cycle) const {
 
-		// Build the cycle of the perimeter
-		cycle.buildBorder();
+		// Repeat for all polygons
+		do {
 
-		// Triangulate the polygon
-		earTrimming(halves, cycle);
+			// Build the cycle of the perimeter
+			cycle.buildBorder();
+
+			// Triangulate the polygon
+			earTrimming(halves, cycle);
+
+			cycle.clearCycle();
+
+		} while (cycle.edgeCount() > 2);
 	}
 
 	/**
