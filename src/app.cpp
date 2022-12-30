@@ -36,7 +36,7 @@ const static char* W_TITLE = "Rubik's cube solver";
 static bool FULL_SCREEN = false;
 
 static bool MIRROR = false;
-static bool SPLIT = true;
+static bool SPLIT = false;
 const static float FOV = 30.0f;
 const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
 const static float NEAR = 0.1f;
@@ -150,7 +150,7 @@ int main(int argc, char** argv) {
 	}
 	else if (SPLIT) {
 		TEXTURE_PATH = "split.png";
-		if (!OBJ_PATH) OBJ_PATH = "peanut.obj";
+		if (!OBJ_PATH) OBJ_PATH = "ghost.obj";
 		CAMERA_POS = glm::vec3(0, 0, 40);
 		REFLECTIVITY = 0.8f;
 		SHINE_DAMPER = 0.6f;

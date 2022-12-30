@@ -48,10 +48,6 @@ namespace splr {
 			return _cycle.size();
 		}
 
-		int vertexCount() const {
-			return _verts.size();
-		}
-
 		int edgeCount() const {
 			return _edges.size();
 		}
@@ -74,7 +70,5 @@ namespace splr {
 		void mergeEdges();
 		void cleanEdges();
 		void findWinding();
-
 	};
-
 }
