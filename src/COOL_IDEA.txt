@@ -1,8 +1,0 @@
-1. Slice any given mesh into a cube with different cubies. Would solve like a mirror cube.
-
---Pseudocode--
-* Create two meshes (the positive mesh and negative mesh)
-* For each tri in the original mesh, if it intersects with the plane
-	Seperate it into three new tris, two on one side of the plane and one on the other
-* Create new triangles for the new faces created. Either have them turn around the center of the face
-	or fanning along pairs of vertices.
