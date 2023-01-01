@@ -18,11 +18,12 @@ namespace splr {
 			// Build the cycle of the perimeter
 			cycle.buildBorder();
 
+			if (cycle.cycleSize() == 0) return;
+
 			// Triangulate the polygon
 			earTrimming(halves, cycle);
 
 			cycle.clearCycle();
-
 		} while (cycle.edgeCount() > 2);
 	}
 

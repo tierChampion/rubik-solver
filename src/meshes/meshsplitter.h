@@ -5,16 +5,25 @@
 
 namespace splr {
 
+	/**
+	* Structure that stores the signs of the distances between
+	* the vertices of a triangle and a plane.
+	*/
 	struct DistancesArray {
+		// Vertices on the plane
 		std::vector<uint8_t> zeros;
+		// Vertices 'up' from the plane
 		std::vector<uint8_t> positives;
+		// Vertices 'down' from the plane
 		std::vector<uint8_t> negatives;
 	};
 
 	static const float SPLIT_PLANE_DIST = 1;
 	static const int CUBIE_COUNT = 27;
 
-	// add a border map to get the edges and the verts
+	/**
+	* Object that manages the slicing of a mesh into a Rubik's cube
+	*/
 	class MeshSplitter {
 
 		std::vector<MeshData> _meshes;
@@ -54,7 +63,6 @@ namespace splr {
 		/// 
 		/// TRIVIAL MESH SPLITTING
 		/// 
-
 		Vertex getPlaneEdgeIntersection(const glm::vec3 planeNorm, const Vertex& v1, const Vertex& v2) const;
 
 		void splitTriInHalf(int meshId, int triId, std::vector<MeshData>& halves,
@@ -66,7 +74,6 @@ namespace splr {
 		///
 		/// FACE RECONSTRUCTION AND DIFFERENT TYPES OF TRIANGULATIONS
 		/// 
-
 		void triangulateFace(std::vector<MeshData>& halves, CyclicBorder& cycle) const;
 		void naiveTriangulation(std::vector<MeshData>& halves, CyclicBorder& cycle) const;
 		void debugTriangulation(std::vector<MeshData>& halves, const CyclicBorder& cycle,

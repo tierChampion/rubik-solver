@@ -9,8 +9,12 @@ namespace splr {
 
 	static const glm::vec3 INFINITE_CAMERA_POS = glm::vec3(0, 0, 100);
 
-	int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2);
+	static int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2);
 
+	/**
+	* Cyclical list of the vertices in a polygon.
+	* Stores the vertices in either Clockwise or Counter-Clockwise order.
+	*/
 	class CyclicBorder {
 
 		int _desiredWinding;
@@ -25,6 +29,7 @@ namespace splr {
 	public:
 
 		CyclicBorder(const glm::vec3 planeNorm);
+
 		void appendEdge(Vertex v1, Vertex v2);
 		void buildBorder();
 

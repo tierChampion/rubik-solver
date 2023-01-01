@@ -105,6 +105,14 @@ namespace splr {
 		// Find two properly ordered edges
 		findWinding();
 
+		// If no valid vertex was found in a reasonable amount of time
+		if (_cycle.size() == 0) {
+			std::cerr << "ERROR: This shape might not give a proper result.\n"
+				<< "Try and check for holes and remove some triangles.\n"
+				<< std::endl;
+			return;
+		}
+
 		bool foundEdge;
 		do {
 			foundEdge = false;
@@ -268,14 +276,16 @@ namespace splr {
 					++brotherIter;
 				}
 
-				// Merge the two brothers
-				brotherIter = std::next(_edges.begin(), brother);
+				// Merge the two brothers if one was found
+				if (minError < INFINITY) {
+					brotherIter = std::next(_edges.begin(), brother);
 
-				neighbours.push_back(brotherIter->second[0]);
+					neighbours.push_back(brotherIter->second[0]);
 
-				_edges.erase(brotherIter);
+					_edges.erase(brotherIter);
 
-				iter = std::next(_edges.begin(), counter);
+					iter = std::next(_edges.begin(), counter);
+				}
 			}
 
 			counter++;
@@ -290,59 +300,69 @@ namespace splr {
 
 		bool foundConvex = false;
 
+		int steps = 0;
+
 		do {
+
+			steps++;
 
 			glm::vec2 dir = glm::circularRand(1.0f);
 
-			int convex = 0;
+			auto iter = _edges.begin();
+
+			Vertex convex = iter->first;
 
 			float maxA = _verts[0]._p[_flatCoords[0]] * dir[0] + _verts[0]._p[_flatCoords[1]] * dir[1];
 			float maxB = _verts[0]._p[_flatCoords[0]] * -dir[1] + _verts[0]._p[_flatCoords[1]] * dir[0];
 
 			// Find the vertex which maximises the two dimensions. 
 			// It is necessarly a corner and convex.
-			for (int i = 1; i < _verts.size(); i++) {
+			while (iter != _edges.end()) {
 
-				if (_verts[i] == _verts[convex]) continue;
+				Vertex current = iter->first;
 
-				float distA = _verts[i]._p[_flatCoords[0]] * dir[0] + _verts[i]._p[_flatCoords[1]] * dir[1];
-				float distB = _verts[i]._p[_flatCoords[0]] * -dir[1] + _verts[i]._p[_flatCoords[1]] * dir[0];
+				float distA = current._p[_flatCoords[0]] * dir[0] + current._p[_flatCoords[1]] * dir[1];
+				float distB = current._p[_flatCoords[0]] * -dir[1] + current._p[_flatCoords[1]] * dir[0];
 
 				if (distA > maxA || (distA == maxA && distB > maxB)) {
-					convex = i;
+					convex = current;
 					maxA = distA;
 					maxB = distB;
 				}
+
+				++iter;
 			}
 
-			std::vector<Vertex> neighbours = _edges[_verts[convex]];
+			std::vector<Vertex> neighbours = _edges[convex];
 
-			if (neighbours.size() != 2) continue;
+			if (neighbours.size() == 2) {
 
-			int triCCW = isCCW(neighbours[0],
-				_verts[convex], neighbours[1]);
 
-			// Flat triangles don't have any logical winding, so ignore them.
-			if (triCCW == 0) {
-				continue;
+				int triCCW = isCCW(neighbours[0],
+					convex, neighbours[1]);
+
+				// Flat triangles don't have any logical winding, so ignore them.
+				if (triCCW != 0) {
+
+					if (triCCW == _desiredWinding) {
+
+						_cycle.push_back(neighbours[0]);
+						_cycle.push_back(convex);
+						_cycle.push_back(neighbours[1]);
+					}
+					else {
+						_cycle.push_back(neighbours[1]);
+						_cycle.push_back(convex);
+						_cycle.push_back(neighbours[0]);
+					}
+
+					_edges.erase(convex);
+
+					foundConvex = true;
+				}
 			}
 
-			if (triCCW == _desiredWinding) {
-
-				_cycle.push_back(neighbours[0]);
-				_cycle.push_back(_verts[convex]);
-				_cycle.push_back(neighbours[1]);
-			}
-			else {
-				_cycle.push_back(neighbours[1]);
-				_cycle.push_back(_verts[convex]);
-				_cycle.push_back(neighbours[0]);
-			}
-
-			_edges.erase(_verts[convex]);
-
-			foundConvex = true;
-
-		} while (!foundConvex);
+			// Maximum amount of tries allowed
+		} while (!foundConvex && steps < 2 * _edges.size());
 	}
 }

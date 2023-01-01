@@ -2,6 +2,9 @@
 
 namespace splr {
 
+	/**
+	* Cuts the mesh into the 27 cubies of the Rubik's cube.
+	*/
 	void MeshSplitter::splitMeshIntoRubik() {
 
 		for (int i = 0; i < _planeNormals.size(); i++) {
@@ -31,6 +34,11 @@ namespace splr {
 		}
 	}
 
+	/**
+	* For debugging purposses, do a single cut of the mesh.
+	* @param planeNorm - Normal of the slicing plane
+	* @param section - Half to keep. 0 for positive mesh and 1 for negative mesh.
+	*/
 	void MeshSplitter::splitSingleSide(const glm::vec3 planeNorm, int section) {
 
 		std::vector<splr::MeshData> split = splitMeshAlongPlane(0, planeNorm);
@@ -93,6 +101,11 @@ namespace splr {
 				splitTriInThree(meshId, v, halves,
 					planeNorm, dists, cycle);
 			}
+
+			// Directly add triangle edge
+			if (dists.zeros.size() == 2) {
+				cycle.appendEdge(original[v + dists.zeros[0]], original[v + dists.zeros[1]]);
+			}
 		}
 		// ear trimming to triangulate the face
 		if (!cycle.isEmpty()) {
@@ -103,6 +116,13 @@ namespace splr {
 		return halves;
 	}
 
+	/**
+	* Get the intersection between the slicing plane and an edge.
+	* @param planeNorm - Normal of the slicing plane
+	* @param v1 - First vertex of the edge
+	* @param v2 - Second vertex of the edge
+	* @return Vertex between v1 and v2 that lies on the plane
+	*/
 	Vertex MeshSplitter::getPlaneEdgeIntersection(const glm::vec3 planeNorm,
 		const Vertex& v1, const Vertex& v2) const {
 
@@ -121,6 +141,17 @@ namespace splr {
 		return Vertex(p, uv, n);
 	}
 
+	/**
+	* Slice a triangle that is split right down the middle.
+	* In other words, the plane intersects with one edge and one vertex of
+	* the triangle.
+	* @param meshId - Index of the current mesh
+	* @param triId - Index of the current triangle
+	* @param halves - Positive and negative parts of the mesh
+	* @param planeNorm - Normal of the slicing plane
+	* @param dists - Signs of the three vertices of the triangle
+	* @param cycle - Cyclic list of the vertices of the intersection polygon of the mesh
+	*/
 	void MeshSplitter::splitTriInHalf(int meshId, int triId, std::vector<MeshData>& halves,
 		const glm::vec3 planeNorm, const DistancesArray& dists, CyclicBorder& cycle) const {
 
@@ -129,6 +160,7 @@ namespace splr {
 		Vertex intersection = getPlaneEdgeIntersection(planeNorm,
 			mesh[dists.negatives[0] + triId], mesh[dists.positives[0] + triId]);
 
+		// Order to wrap the triangles
 		bool windingOrder = ((dists.zeros[0] + 1) % 3) == dists.positives[0];
 
 		int start = dists.zeros[0];
@@ -161,6 +193,17 @@ namespace splr {
 		}
 	}
 
+	/**
+	* Slice a triangle that is split on a bias.
+	* In other words, the plane intersects with two edges of
+	* the triangle.
+	* @param meshId - Index of the current mesh
+	* @param triId - Index of the current triangle
+	* @param halves - Positive and negative parts of the mesh
+	* @param planeNorm - Normal of the slicing plane
+	* @param dists - Signs of the three vertices of the triangle
+	* @param cycle - Cyclic list of the vertices of the intersection polygon of the mesh
+	*/
 	void MeshSplitter::splitTriInThree(int meshId, int triId, std::vector<MeshData>& halves,
 		const glm::vec3 planeNorm, const DistancesArray& dists, CyclicBorder& cycle) const {
 

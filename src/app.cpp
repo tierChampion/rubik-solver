@@ -189,9 +189,6 @@ int main(int argc, char** argv) {
 	/// SLICING OF THE MESH IN THE CASE OF A SPLIT MESH ///
 	if (SPLIT) {
 		splitter.splitMeshIntoRubik();
-		//splitter.splitSingleSide(glm::vec3(1, 0, 0), 1);
-		//splitter.splitSingleSide(glm::vec3(0, 0, -1), 0);
-		//splitter.splitSingleSide(glm::vec3(0, 1, 0), 0);
 	}
 
 	for (splr::MeshData mesh : splitter.getMeshes()) {
