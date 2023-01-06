@@ -18,6 +18,7 @@ Window::Window(int width, int height, float aspect_ratio, const char*& title, bo
 
 Window::~Window() {
 	glfwDestroyWindow(_window);
+	glfwTerminate();
 }
 
 GLFWwindow* Window::getWindow() {

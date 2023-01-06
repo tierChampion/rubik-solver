@@ -9,7 +9,7 @@ namespace splr {
 
 	static const glm::vec3 INFINITE_CAMERA_POS = glm::vec3(0, 0, 100);
 
-	static int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2);
+	int isCCW(const Vertex& v0, const Vertex& v1, const Vertex& v2);
 
 	/**
 	* Cyclical list of the vertices in a polygon.

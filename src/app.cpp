@@ -39,8 +39,8 @@ static bool MIRROR = false;
 static bool SPLIT = false;
 const static float FOV = 30.0f;
 const static float ASPECT_RATIO = W_WIDTH / float(W_HEIGHT);
-const static float NEAR = 0.1f;
-const static float FAR = 100.0f;
+const static float NEAR_DIST = 0.1f;
+const static float FAR_DIST = 100.0f;
 
 bool initGL() {
 	glewExperimental = GL_TRUE;
@@ -53,6 +53,7 @@ bool initGL() {
 	}
 
 	SDK_CHECK_ERROR_GL();
+
 	return true;
 }
 
@@ -198,7 +199,7 @@ int main(int argc, char** argv) {
 	/* Creation of the camera. */
 	Camera cam;
 	cam.createView(CAMERA_POS, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-	cam.createPerspective(FOV, ASPECT_RATIO, NEAR, FAR);
+	cam.createPerspective(FOV, ASPECT_RATIO, NEAR_DIST, FAR_DIST);
 
 	/* Creation of the shader program. */
 	GLSLProgram program((PROJ_PATH + "src/shaders/vertex.glsl").c_str(),
@@ -227,8 +228,9 @@ int main(int argc, char** argv) {
 	/* Enables backface culling */
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	/* Enables depth testing */
+	/* Enables depth testing and anti-aliasing */
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MULTISAMPLE);
 
 	/* Callbacks for controls. */
 	glfwSetKeyCallback(window->getWindow(), Keyboard::turningCube_KeyCallback);
