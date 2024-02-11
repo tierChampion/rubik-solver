@@ -1,4 +1,4 @@
-#include "vao.h"
+#include "opengl/vao.h"
 
 /**
 * Stores the mesh data of a file in a Vao.

@@ -1,4 +1,3 @@
-debug
-release
-*.vcxproj*
+out
+res
 .vs

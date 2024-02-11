@@ -1,4 +1,4 @@
-#include "state.h"
+#include "cube/state.h"
 
 namespace rubik {
 	CubeState::CubeState() {

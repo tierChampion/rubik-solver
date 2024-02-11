@@ -1,4 +1,4 @@
-#include "program.h"
+#include "glsl/program.h"
 
 GLSLProgram::GLSLProgram() :
 	_programId(0), _vertexShader(NULL), _fragmentShader(NULL), _linked(false) {}

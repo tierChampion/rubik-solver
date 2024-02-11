@@ -1,4 +1,4 @@
-#include "camera.h"
+#include "opengl/camera.h"
 
 Camera::Camera() : _viewMatrix(glm::mat4(0.0f)), _projectionMatrix(glm::mat4(0.0f)) {}
 

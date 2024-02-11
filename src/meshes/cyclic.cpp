@@ -1,4 +1,4 @@
-#include "cyclic.h"
+#include "meshes/cyclic.h"
 
 namespace splr {
 

@@ -1,4 +1,4 @@
-#include "texture.h"
+#include "image/texture.h"
 
 /**
 * Create an OpenGL texture using the given image file

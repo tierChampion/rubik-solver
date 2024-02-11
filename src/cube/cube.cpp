@@ -1,4 +1,4 @@
-#include "cube.h"
+#include "cube/cube.h"
 
 namespace rubik {
 

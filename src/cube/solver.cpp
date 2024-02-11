@@ -1,4 +1,4 @@
-#include "solver.h"
+#include "cube/solver.h"
 
 namespace rubik {
 

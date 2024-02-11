@@ -2,23 +2,23 @@
 #define GLEW_STATIC
 #endif
 
-#include <glew.h>
-#include <glfw3.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <glm/glm.hpp>
-#include "helpers/helper_gl.h"
+#include "helper_gl.h"
 
-#define _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES    
 
 #include <math.h>
 #include <thread>
 #include <future>
 
 #include "image/texture.h"
-#include "glfw/window.h"
-#include "glfw/keyboard.h"
-#include "glfw/mouse.h"
+#include "ui/window.h"
+#include "ui/keyboard.h"
+#include "ui/mouse.h"
 #include "cube/cube.h"
 #include "opengl/vao.h"
 #include "opengl/camera.h"
@@ -135,11 +135,7 @@ int main(int argc, char** argv) {
 	}
 
 	/// PROJECT DIR ///
-	char buffer[255] = "";
-	char* execPath = _fullpath(buffer, argv[0], sizeof(buffer));
-	std::string PROJ_PATH(execPath);
-	size_t firstLoc = PROJ_PATH.find("\\RubikSolver\\");
-	PROJ_PATH = PROJ_PATH.substr(0, firstLoc) + "\\RubikSolver\\";
+	std::string PROJ_PATH(DIRECTORY_PATH);
 
 	/// PARAMETER SETTINGS ///
 	if (MIRROR) {
@@ -171,7 +167,7 @@ int main(int argc, char** argv) {
 	stbi_set_flip_vertically_on_load(1);
 
 	/* Creation of the texture. */
-	Texture img((PROJ_PATH + "res/Textures/" + TEXTURE_PATH).c_str());
+	Texture img((PROJ_PATH + "/res/Textures/" + TEXTURE_PATH).c_str());
 	img.passToOpenGL();
 	img.bind(0);
 
@@ -179,7 +175,7 @@ int main(int argc, char** argv) {
 	std::vector<Vao> vaos;
 
 	splr::MeshData originalMesh;
-	bool found = splr::loadObj((PROJ_PATH + "res/" + OBJ_PATH).c_str(), originalMesh);
+	bool found = splr::loadObj((PROJ_PATH + "/res/" + OBJ_PATH).c_str(), originalMesh);
 
 	if (!found) {
 		std::cerr << "ERROR: The mesh file " << OBJ_PATH << " could not be opened." << std::endl;
@@ -202,8 +198,8 @@ int main(int argc, char** argv) {
 	cam.createPerspective(FOV, ASPECT_RATIO, NEAR_DIST, FAR_DIST);
 
 	/* Creation of the shader program. */
-	GLSLProgram program((PROJ_PATH + "src/shaders/vertex.glsl").c_str(),
-		(PROJ_PATH + "src/shaders/fragment.glsl").c_str());
+	GLSLProgram program((PROJ_PATH + "/src/shaders/vertex.glsl").c_str(),
+		(PROJ_PATH + "/src/shaders/fragment.glsl").c_str());
 	program.compile();
 	program.use();
 

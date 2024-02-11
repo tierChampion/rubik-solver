@@ -1,4 +1,4 @@
-#include "meshsplitter.h"
+#include "meshes/meshsplitter.h"
 
 namespace splr {
 

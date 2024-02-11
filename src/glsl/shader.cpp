@@ -1,4 +1,4 @@
-#include "shader.h"
+#include "glsl/shader.h"
 
 GLSLShader::GLSLShader() :
 	_shaderId(0), _compiled(false), _shaderType(0), _shaderName(""), _shaderSrc("") {}
