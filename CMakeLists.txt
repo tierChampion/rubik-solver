@@ -24,11 +24,21 @@ include_directories("deps/GLM/")
 # include_directories(${IMGUI_DIR})
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-include_directories("deps/GLFW/include")
-include_directories("deps/GLEW/include")
+	include_directories("deps/GLFW/include")
+	include_directories("deps/GLEW/include")
+	
+	link_directories("deps/GLFW/lib-vc2022")
+	link_directories("deps/GLEW/lib/Release/x64")
 
-link_directories("deps/GLFW/lib-vc2022")
-link_directories("deps/GLEW/lib/Release/x64")
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+	find_package(glfw3 REQUIRED)
+	find_package(GLEW REQUIRED)
+	find_package(OpenGL REQUIRED)
+
+	include_directories(${GLFW_INCLUDE_DIRS})
+	include_directories(${GLEW_INCLUDE_DIRS})
+	include_directories(${OPENGL_INCLUDE_DIRS})
+
 endif()
 
 # Executable definition

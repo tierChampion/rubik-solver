@@ -98,7 +98,7 @@ namespace splr {
 	static float triArea(const glm::vec3 p0, const glm::vec3 p1, const glm::vec3 p2,
 		glm::vec2 coords) {
 
-		return 0.5f * (std::fabsf(p0[coords[0]] * (p1[coords[1]] - p2[coords[1]]) +
+		return 0.5f * (std::fabs(p0[coords[0]] * (p1[coords[1]] - p2[coords[1]]) +
 			p1[coords[0]] * (p2[coords[1]] - p0[coords[1]]) +
 			p2[coords[0]] * (p0[coords[1]] - p1[coords[1]])));
 	}
@@ -137,7 +137,7 @@ namespace splr {
 				cycle[earId]._p, cycle[i]._p, cycle.getPlaneCoordinates());
 
 			// Areas are approximately the same
-			if (std::fabsf((area1 + area2 + area3) - totalArea) <= 0.00001f) return false;
+			if (std::fabs((area1 + area2 + area3) - totalArea) <= 0.00001f) return false;
 		}
 
 		return true;

@@ -24,7 +24,8 @@ namespace splr {
 		std::vector<glm::vec3> tempNormals;
 
 		FILE* file;
-		fopen_s(&file, path, "r");
+		// fopen_s(&file, path, "r");
+		file = fopen(path, "r");
 		if (file == NULL) {
 			std::cerr << "ERROR: The given OBJ file cannot be found." << std::endl;
 			return false;
@@ -33,26 +34,30 @@ namespace splr {
 		while (1) {
 
 			char lineHeader[128];
-			int res = fscanf_s(file, "%s", lineHeader, sizeof(lineHeader));
+			// int res = fscanf_s(file, "%s", lineHeader, sizeof(lineHeader));
+			int res = fscanf(file, "%s", lineHeader, sizeof(lineHeader));
 			if (res == EOF)
 				break; // Reached the end of the file
 
 			// Vertex position
 			if (strcmp(lineHeader, "v") == 0) {
 				glm::vec3 vertex;
-				fscanf_s(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
+				// fscanf_s(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
+				fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
 				tempVerts.push_back(vertex);
 			}
 			// Vertex texture coordinates
 			else if (strcmp(lineHeader, "vt") == 0) {
 				glm::vec2 uv;
-				fscanf_s(file, "%f %f\n", &uv.x, &uv.y);
+				// fscanf_s(file, "%f %f\n", &uv.x, &uv.y);
+				fscanf(file, "%f %f\n", &uv.x, &uv.y);
 				tempUV.push_back(uv);
 			}
 			// Vertex normal coordinates
 			else if (strcmp(lineHeader, "vn") == 0) {
 				glm::vec3 normal;
-				fscanf_s(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
+				// fscanf_s(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
+				fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
 				tempNormals.push_back(normal);
 			}
 			// indices
@@ -60,7 +65,11 @@ namespace splr {
 
 				std::string vert1, vert2, vert3;
 				unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-				int matches = fscanf_s(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n",
+				// int matches = fscanf_s(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n",
+				// 	&vertexIndex[0], &uvIndex[0], &normalIndex[0],
+				// 	&vertexIndex[1], &uvIndex[1], &normalIndex[1],
+				// 	&vertexIndex[2], &uvIndex[2], &normalIndex[2]);
+				int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n",
 					&vertexIndex[0], &uvIndex[0], &normalIndex[0],
 					&vertexIndex[1], &uvIndex[1], &normalIndex[1],
 					&vertexIndex[2], &uvIndex[2], &normalIndex[2]);

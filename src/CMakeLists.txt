@@ -23,9 +23,11 @@ add_executable (RubikSolver
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-	target_link_libraries(RubikSolver glfw3)
-	target_link_libraries(RubikSolver glew32s)
-	target_link_libraries(RubikSolver opengl32)
+	target_link_libraries(RubikSolver glfw3 glew32s opengl32)
+
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+	target_link_libraries(RubikSolver glfw ${GLEW_LIBRARIES} ${OPENGL_LIBRARIES})
+
 endif()
 
 # TODO: Add tests and install targets if needed.

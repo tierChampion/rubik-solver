@@ -9,7 +9,7 @@
  *
  */
 
- // These are helper functions for the SDK samples (OpenGL)
+// These are helper functions for the SDK samples (OpenGL)
 #ifndef HELPER_GL_H
 #define HELPER_GL_H
 
@@ -35,19 +35,20 @@
 #include <vector>
 #include <assert.h>
 
-
 /* Prototypes */
-namespace __HelperGL {
+namespace __HelperGL
+{
 	static int isGLVersionSupported(unsigned reqMajor, unsigned reqMinor);
-	static int areGLExtensionsSupported(const std::string&);
+	static int areGLExtensionsSupported(const std::string &);
 #ifdef __linux__
 
 #ifndef HELPERGL_EXTERN_GL_FUNC_IMPLEMENTATION
-#define USE_GL_FUNC(name, proto) proto name = (proto) glXGetProcAddress ((const GLubyte *)#name)
+#define USE_GL_FUNC(name, proto) proto name = (proto)glXGetProcAddress((const GLubyte *)#name)
 #else
 #define USE_GL_FUNC(name, proto) extern proto name
 #endif
 
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
 	USE_GL_FUNC(glBindBuffer, PFNGLBINDBUFFERPROC);
 	USE_GL_FUNC(glDeleteBuffers, PFNGLDELETEBUFFERSPROC);
 	USE_GL_FUNC(glBufferData, PFNGLBUFFERDATAPROC);
@@ -102,6 +103,7 @@ namespace __HelperGL {
 	USE_GL_FUNC(glFramebufferRenderbufferEXT, PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC);
 	USE_GL_FUNC(glClampColorARB, PFNGLCLAMPCOLORARBPROC);
 	USE_GL_FUNC(glBindFragDataLocationEXT, PFNGLBINDFRAGDATALOCATIONEXTPROC);
+#endif
 
 #if !defined(GLX_EXTENSION_NAME) || !defined(GL_VERSION_1_3)
 	USE_GL_FUNC(glActiveTexture, PFNGLACTIVETEXTUREPROC);
@@ -112,10 +114,11 @@ namespace __HelperGL {
 #endif /*__linux__ */
 }
 
-
-namespace __HelperGL {
-	namespace __Int {
-		static std::vector<std::string> split(const std::string& str)
+namespace __HelperGL
+{
+	namespace __Int
+	{
+		static std::vector<std::string> split(const std::string &str)
 		{
 			std::istringstream ss(str);
 			std::istream_iterator<std::string> it(ss);
@@ -123,40 +126,44 @@ namespace __HelperGL {
 		}
 
 		/* Sort the vector passed by reference */
-		template<typename T> static inline void sort(std::vector<T>& a)
+		template <typename T>
+		static inline void sort(std::vector<T> &a)
 		{
 			std::sort(a.begin(), a.end());
 		}
 
 		/* Compare two vectors */
-		template<typename T> static int equals(std::vector<T> a, std::vector<T> b)
+		template <typename T>
+		static int equals(std::vector<T> a, std::vector<T> b)
 		{
-			if (a.size() != b.size()) return 0;
+			if (a.size() != b.size())
+				return 0;
 			sort(a);
 			sort(b);
 
 			return std::equal(a.begin(), a.end(), b.begin());
 		}
 
-		template<typename T> static std::vector<T> getIntersection(std::vector<T> a, std::vector<T> b)
+		template <typename T>
+		static std::vector<T> getIntersection(std::vector<T> a, std::vector<T> b)
 		{
 			sort(a);
 			sort(b);
 
 			std::vector<T> rc;
 			std::set_intersection(a.begin(), a.end(), b.begin(), b.end(),
-				std::back_inserter<std::vector<std::string> >(rc));
+								  std::back_inserter<std::vector<std::string>>(rc));
 			return rc;
 		}
 
 		static std::vector<std::string> getGLExtensions()
 		{
-			std::string extensionsStr((const char*)glGetString(GL_EXTENSIONS));
+			std::string extensionsStr((const char *)glGetString(GL_EXTENSIONS));
 			return split(extensionsStr);
 		}
 	}
 
-	static int areGLExtensionsSupported(const std::string& extensions)
+	static int areGLExtensionsSupported(const std::string &extensions)
 	{
 		std::vector<std::string> all = __Int::getGLExtensions();
 
@@ -175,7 +182,7 @@ namespace __HelperGL {
 			return 0;
 		}
 #endif
-		std::string version((const char*)glGetString(GL_VERSION));
+		std::string version((const char *)glGetString(GL_VERSION));
 		std::stringstream stream(version);
 		unsigned major, minor;
 		char dot;
@@ -186,9 +193,11 @@ namespace __HelperGL {
 		return major > reqMajor || (major == reqMajor && minor >= reqMinor);
 	}
 
-	static inline const char* glErrorToString(GLenum err)
+	static inline const char *glErrorToString(GLenum err)
 	{
-#define CASE_RETURN_MACRO(arg) case arg: return #arg
+#define CASE_RETURN_MACRO(arg) \
+	case arg:                  \
+		return #arg
 		switch (err)
 		{
 			CASE_RETURN_MACRO(GL_NO_ERROR);
@@ -201,7 +210,8 @@ namespace __HelperGL {
 #ifdef GL_INVALID_FRAMEBUFFER_OPERATION
 			CASE_RETURN_MACRO(GL_INVALID_FRAMEBUFFER_OPERATION);
 #endif
-		default: break;
+		default:
+			break;
 		}
 #undef CASE_RETURN_MACRO
 		return "*UNKNOWN*";
@@ -215,7 +225,7 @@ namespace __HelperGL {
 	//! @note The GL error is listed on stderr
 	//! @note This function should be used via the CHECK_ERROR_GL() macro
 	////////////////////////////////////////////////////////////////////////////
-	inline bool sdkCheckErrorGL(const char* file, const int line)
+	inline bool sdkCheckErrorGL(const char *file, const int line)
 	{
 		bool ret_val = true;
 
@@ -239,14 +249,14 @@ namespace __HelperGL {
 		return ret_val;
 	}
 
-#define SDK_CHECK_ERROR_GL()                                              \
-    if( false == sdkCheckErrorGL( __FILE__, __LINE__)) {                  \
-        exit(EXIT_FAILURE);                                               \
-    }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+#define SDK_CHECK_ERROR_GL()                          \
+	if (false == sdkCheckErrorGL(__FILE__, __LINE__)) \
+	{                                                 \
+		exit(EXIT_FAILURE);                           \
+	}
 
 } /* of namespace __HelperGL*/
 
 using namespace __HelperGL;
 
 #endif /*HELPER_GL_H*/
-

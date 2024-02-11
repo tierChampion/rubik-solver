@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <cstring>
 
 namespace splr {
 
@@ -17,8 +18,8 @@ namespace splr {
 		// precision
 		static const float delta = 0.0001f;
 
-		return std::fabsf(glm::compMax(v)) < delta &&
-			std::fabsf(glm::compMin(v)) < delta;
+		return std::fabs(glm::compMax(v)) < delta &&
+			std::fabs(glm::compMin(v)) < delta;
 
 	}
 
