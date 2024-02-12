@@ -3,10 +3,8 @@
 #include <vector>
 #include "move.h"
 
-
-namespace rubik {
-
-
+namespace rubik
+{
 	/**********************************************************************
 	 * A cube 'state' is a vector<int> with 40 entries, the first 20
 	 * are a permutation of {0,...,19} and describe which cubie is at
@@ -27,21 +25,21 @@ namespace rubik {
 	 *
 	 **********************************************************************/
 
-	 /*
-	 Binary numbers to query the possible moves:
-		 - If there is a 1, the move is legal for the given phase
-		 - If there is a 0, the move is illegal for the given phase
-	 */
+	/*
+	Binary numbers to query the possible moves:
+		- If there is a 1, the move is legal for the given phase
+		- If there is a 0, the move is illegal for the given phase
+	*/
 	const unsigned int THISTLETHWAITE_MOVES[] = {
-		//0b111111111111111111, // {U, D, F, B, L, R}
-		0b111111111111111111,//0b111111010010111111, // {U, D, F2, B2, L, R}
+		// 0b111111111111111111, // {U, D, F, B, L, R}
+		0b111111111111111111, // 0b111111010010111111, // {U, D, F2, B2, L, R}
 		0b010010010010111111, // {U, D, F2, B2, L2, R2}
 		0b010010010010111111, // {U, D, F2, B2, L2, R2}
 	};
 
 	const unsigned int KOCIEMBA_MOVES[] = {
 		0b111111111111111111, // {U, D, F, B, L, R}
-		0b010010010010111111,// {U, D, F2, B2, L2, R2}
+		0b010010010010111111, // {U, D, F2, B2, L2, R2}
 	};
 
 	/*
@@ -51,10 +49,10 @@ namespace rubik {
 	const int AFFECTED_CUBIES[][8] = {
 		{0, 1, 2, 3, 0, 1, 2, 3},	// U
 		{4, 7, 6, 5, 4, 5, 6, 7},	// D
-		{0, 9, 4, 8, 0, 3, 5, 4},	// F 
-		{2, 10, 6, 11, 2, 1, 7, 6},	// B 
-		{3, 11, 7, 9, 3, 2, 6, 5},	// L 
-		{1, 8, 5, 10, 1, 0, 4, 7},	// R 
+		{0, 9, 4, 8, 0, 3, 5, 4},	// F
+		{2, 10, 6, 11, 2, 1, 7, 6}, // B
+		{3, 11, 7, 9, 3, 2, 6, 5},	// L
+		{1, 8, 5, 10, 1, 0, 4, 7},	// R
 	};
 
 	const static unsigned int NUM_POSSIBLE_MOVES = 18;
@@ -65,32 +63,20 @@ namespace rubik {
 	const static unsigned int NUM_CENTERS = 6;
 	const static unsigned int TOTAL_NUM_CUBIES = NUM_EDGES + NUM_CORNERS;
 
-	class CubeState {
-
+	class CubeState
+	{
 		std::vector<uint8_t> _state;
 
 	public:
 		CubeState();
-		CubeState(std::vector<uint8_t>& s);
-		CubeState applyMove(const Move move) const;
+		CubeState(std::vector<uint8_t> &s);
+		CubeState applyMove(const Move& move) const;
 		std::vector<uint16_t> thistlethwaiteKociembaId(unsigned int phase) const;
 		int size() const;
 
-		bool operator<(const CubeState& other_state) const;
+		bool operator<(const CubeState &other_state) const;
 		int operator[](const int i) const;
 
-		/**
-		* Show the cube state.
-		* @param state - state to show
-		*/
-		friend std::ostream& operator<<(std::ostream& s, const CubeState& state) {
-
-			for (int i = 0; i < 2 * TOTAL_NUM_CUBIES + 6; i++) {
-				s << state[i];
-			}
-
-			return s << "\n";
-		}
+		friend std::ostream &operator<<(std::ostream &s, const CubeState &state);
 	};
 }
-

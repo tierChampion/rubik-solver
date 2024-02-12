@@ -1,16 +1,21 @@
 #include "cube/solver.h"
 
-namespace rubik {
+#include <iostream>
+#include <string>
+#include <map>
+#include <algorithm>
 
+namespace rubik
+{
 	/**
-	* Compute an algorithm to solve the current scrambled state of the cube
-	* by using a mix between Thistlethwaite's and Kociemba's algorithm. Averages around 28 moves.
-	* The idea is to use the metrics of the Kociemba but with the last phase split into two parts:
-	* the first one is similar to the Thistlethwaite while the second phase is the Kociemba's.
-	* @param problem - state of the cube to solve
-	*/
-	std::vector<Move> thistlethwaiteKociemba(CubeState problem) {
-
+	 * Compute an algorithm to solve the current scrambled state of the cube
+	 * by using a mix between Thistlethwaite's and Kociemba's algorithm. Averages around 28 moves.
+	 * The idea is to use the metrics of the Kociemba but with the last phase split into two parts:
+	 * the first one is similar to the Thistlethwaite while the second phase is the Kociemba's.
+	 * @param problem - state of the cube to solve
+	 */
+	std::vector<Move> thistlethwaiteKociemba(CubeState problem)
+	{
 		std::vector<Move> solution;
 		CubeState currentState = problem;
 
@@ -19,13 +24,14 @@ namespace rubik {
 
 		int phase = 0;
 
-		while (phase < THISTLETHWAITE_KOCIEMBA_PHASE_COUNT) {
-
+		while (phase < THISTLETHWAITE_KOCIEMBA_PHASE_COUNT)
+		{
 			std::vector<uint16_t> currentId = currentState.thistlethwaiteKociembaId(phase),
-				goalId = goalState.thistlethwaiteKociembaId(phase);
+								  goalId = goalState.thistlethwaiteKociembaId(phase);
 
 			// Skip the phase if already solved
-			if (currentId == goalId) {
+			if (currentId == goalId)
+			{
 				phase++;
 				continue;
 			}
@@ -50,35 +56,37 @@ namespace rubik {
 			// Move that was used to reach the state
 			std::map<std::vector<uint16_t>, Move> lastMove;
 
-
 			bool finishedPhase = false;
 
-			while (!finishedPhase) {
-
+			while (!finishedPhase)
+			{
 				// State to explore from
 				CubeState oldState = q.front();
 				q.pop();
 
 				std::vector<uint16_t> oldId = oldState.thistlethwaiteKociembaId(phase);
-				int8_t& oldDir = direction[oldId];
+				int8_t &oldDir = direction[oldId];
 
 				// Explore all the legal moves for new states
-				for (int m = 0; m < NUM_POSSIBLE_MOVES && !finishedPhase; m++) {
-					if (THISTLETHWAITE_MOVES[phase] & (1 << m)) {
-
+				for (int m = 0; m < NUM_POSSIBLE_MOVES && !finishedPhase; m++)
+				{
+					if (THISTLETHWAITE_MOVES[phase] & (1 << m))
+					{
 						Move move(m);
 
 						CubeState newState = oldState.applyMove(move);
 
 						std::vector<uint16_t> newId = newState.thistlethwaiteKociembaId(phase);
-						int8_t& newDir = direction[newId];
+						int8_t &newDir = direction[newId];
 
 						// The new state has already been seen and it has a different direction.
 						// This means that the scrambled and solved states are now connected.
-						if (newDir && newDir != oldDir) {
+						if (newDir && newDir != oldDir)
+						{
 
 							// If the state comes from the solved state, invert the moves.
-							if (oldDir < 0) {
+							if (oldDir < 0)
+							{
 								swap(newId, oldId);
 								move = move.inverse();
 							}
@@ -86,20 +94,23 @@ namespace rubik {
 							std::vector<Move> algorithm(1, move);
 
 							// Connect the positive path
-							while (oldId != currentId) {
+							while (oldId != currentId)
+							{
 
 								algorithm.insert(algorithm.begin(), lastMove[oldId]);
 								oldId = predecessor[oldId];
 							}
 
 							// Connect the negative path
-							while (newId != goalId) {
+							while (newId != goalId)
+							{
 								algorithm.push_back(lastMove[newId].inverse());
 								newId = predecessor[newId];
 							}
 
 							// Apply the algorithm to the srambled state
-							for (int i = 0; i < algorithm.size(); i++) {
+							for (int i = 0; i < algorithm.size(); i++)
+							{
 								solution.push_back(algorithm[i]);
 								currentState = currentState.applyMove(algorithm[i]);
 							}
@@ -108,7 +119,8 @@ namespace rubik {
 						}
 
 						// State was never seen. Update the tables and set the direction.
-						if (!newDir) {
+						if (!newDir)
+						{
 							q.push(newState);
 							newDir = oldDir;
 							lastMove[newId] = move;
@@ -124,19 +136,23 @@ namespace rubik {
 	}
 
 	/**
-	* Solve the orientation of centers using a preset algorithm.
-	* @param problem - State to solve the orientation of the centers of.
-	* @return algorithm to reach a center-solved state
-	*/
-	std::vector<Move> solveCenters(CubeState problem) {
-
+	 * Solve the orientation of centers using a preset algorithm.
+	 * @param problem - State to solve the orientation of the centers of.
+	 * @return algorithm to reach a center-solved state
+	 */
+	std::vector<Move> solveCenters(CubeState problem)
+	{
 		std::vector<Move> solution;
 
-		for (int i = 0; i < NUM_CENTERS; i++) {
-			if (problem[2 * TOTAL_NUM_CUBIES + i] != 0) {
-				if (i < 4) {
+		for (int i = 0; i < NUM_CENTERS; i++)
+		{
+			if (problem[2 * TOTAL_NUM_CUBIES + i] != 0)
+			{
+				if (i < 4)
+				{
 					// (?RL?2R'L') x2
-					for (int a = 0; a < 2; a++) {
+					for (int a = 0; a < 2; a++)
+					{
 						solution.push_back(Move(i, 1));
 						solution.push_back(Move(MoveType::R1));
 						solution.push_back(Move(MoveType::L1));
@@ -145,9 +161,11 @@ namespace rubik {
 						solution.push_back(Move(MoveType::L3));
 					}
 				}
-				else {
+				else
+				{
 					// (?UD?2U'D') x2
-					for (int a = 0; a < 2; a++) {
+					for (int a = 0; a < 2; a++)
+					{
 						solution.push_back(Move(i, 1));
 						solution.push_back(Move(MoveType::U1));
 						solution.push_back(Move(MoveType::D1));
@@ -163,19 +181,20 @@ namespace rubik {
 	}
 
 	/**
-	* Clean up the solution and simplify useless moves.
-	* @param solution - series of moves to simplify
-	*/
-	std::queue<Move> optimizeSolution(std::vector<Move> solution) {
-
+	 * Clean up the solution and simplify useless moves.
+	 * @param solution - series of moves to simplify
+	 */
+	std::queue<Move> optimizeSolution(std::vector<Move> solution)
+	{
 		std::queue<Move> optimisation;
 
-		if (solution.empty()) {
+		if (solution.empty())
+		{
 			return optimisation;
 		}
 
-		while (solution.size() != 0) {
-
+		while (solution.size() != 0)
+		{
 			Move current = solution[0];
 			solution.erase(solution.begin());
 
@@ -183,27 +202,31 @@ namespace rubik {
 			int face = current.getFace();
 
 			int pos = 0;
-			while (solution.size() > pos) {
-
+			while (solution.size() > pos)
+			{
 				/*
-				* Step through the moves and group consecutive moves that turn the same face.
-				* Also jump over opposite face turns since they don't modify the turn.
-				*/
-				if (solution[pos].getAxis() == current.getAxis()) {
-					if (face == solution[pos].getFace()) {
-
+				 * Step through the moves and group consecutive moves that turn the same face.
+				 * Also jump over opposite face turns since they don't modify the turn.
+				 */
+				if (solution[pos].getAxis() == current.getAxis())
+				{
+					if (face == solution[pos].getFace())
+					{
 						turns += solution[pos].getTurns();
 						solution.erase(solution.begin() + pos);
 					}
-					else {
+					else
+					{
 						pos++;
 					}
 				}
-				else break;
+				else
+					break;
 			}
 
 			turns %= 4;
-			if (turns != 0) optimisation.push(Move(face, turns));
+			if (turns != 0)
+				optimisation.push(Move(face, turns));
 		}
 
 		return optimisation;

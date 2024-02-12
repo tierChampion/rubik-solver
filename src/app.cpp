@@ -20,16 +20,20 @@
 #include "ui/window.h"
 #include "ui/keyboard.h"
 #include "ui/mouse.h"
-#include "cube/cube.h"
 #include "opengl/vao.h"
 #include "opengl/camera.h"
+#include "cube/model.h"
+#include "cube/move.h"
+#include "cube/solver.h"
+#include "cube/state.h"
+#include "cube/cube.h"
 #include "meshes/meshsplitter.h"
 #include "glsl/program.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "image/stb_image.h"
 
-rubik::Window* window;
+GameWindow* window;
 
 const static unsigned int W_WIDTH = 1280;
 const static unsigned int W_HEIGHT = 720;
@@ -66,7 +70,7 @@ bool initGLFW() {
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	// Create GLFW context and window
-	window = new rubik::Window(W_WIDTH, W_HEIGHT, ASPECT_RATIO, W_TITLE, FULL_SCREEN);
+	window = new GameWindow(W_WIDTH, W_HEIGHT, ASPECT_RATIO, W_TITLE, FULL_SCREEN);
 	window->makeCurrentContext();
 	window->setSwapInterval(1);
 	return true;
