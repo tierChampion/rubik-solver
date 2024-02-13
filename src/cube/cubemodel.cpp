@@ -10,24 +10,22 @@ namespace rubik
 	 *
 	 * @param mirror -> whether the cube is a mirror cube or a regular rubiks cube
 	 */
-	CubeModel::CubeModel(bool mirror, bool splitted)
+	CubeModel::CubeModel(CubeType type)
 	{
-		float scale = mirror ? MIRROR_SCALE : NORMAL_SCALE;
-
 		for (int x = 0; x < DIMENSION; x++)
 		{
 			for (int y = 0; y < DIMENSION; y++)
 			{
 				for (int z = 0; z < DIMENSION; z++)
 				{
-					_cubies.push_back(CubieModel(x, y, z, scale, splitted));
+					_cubies.push_back(CubieModel(x, y, z, type));
 				}
 			}
 		}
 
 		_quaternion = glm::quat(glm::vec3(0, 0, 0));
 		_currentStep = 0;
-		_splitted = splitted;
+		_splitted = (type == CubeType::SPLIT);
 	}
 
 	/**
@@ -145,5 +143,21 @@ namespace rubik
 
 			_targets.push(moveTargets);
 		}
+	}
+
+	void CubeModel::changeType(CubeType newType)
+	{
+		for (int x = 0; x < DIMENSION; x++)
+		{
+			for (int y = 0; y < DIMENSION; y++)
+			{
+				for (int z = 0; z < DIMENSION; z++)
+				{
+					_cubies[x * 9 + y * 3 + z].changeType(x, y, z, newType);
+				}
+			}
+		}
+
+		_splitted = (newType == CubeType::SPLIT);
 	}
 }

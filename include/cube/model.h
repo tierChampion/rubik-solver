@@ -24,6 +24,12 @@ namespace rubik
 	const float NORMAL_SCALE = 0.0f;
 	const float MIRROR_SCALE = 0.55f;
 
+	enum class CubeType {
+		REGULAR,
+		MIRROR,
+		SPLIT,
+	};
+
 	/**
 	 * Implementation of the graphic interface of a single cubie.
 	 * Has the three parts of the model matrix <translation, rotation and scale> as well as
@@ -39,11 +45,12 @@ namespace rubik
 		std::vector<glm::vec3> _faceNormals;
 
 	public:
-		CubieModel(int x, int y, int z, float scaleFactor, bool splitted);
+		CubieModel(int x, int y, int z, CubeType type);
 		void turn(float theta, glm::vec3 axis);
 		void updateNormals();
 		glm::mat4 getModelMat();
 		std::vector<glm::vec3> getNormals();
+		void changeType(int x, int y, int z, CubeType newType);
 
 	private:
 		void determineNormals(int x, int y, int z);
@@ -64,11 +71,12 @@ namespace rubik
 		bool _splitted;
 
 	public:
-		CubeModel(bool mirror, bool splitted);
+		CubeModel(CubeType type);
 		bool render(const std::vector<Vao> &vaos, int programId);
 		void update();
 		void turnFace(Move move);
 		void turnCube(glm::vec2 delta);
+		void changeType(CubeType newType);
 
 	private:
 		void addTargets();

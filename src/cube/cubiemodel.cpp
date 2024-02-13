@@ -8,8 +8,10 @@ namespace rubik
 	 * @param the coordinates of the cubie in cubie space
 	 * @param scale of the cubie
 	 */
-	CubieModel::CubieModel(int x, int y, int z, float scaleFactor, bool splitted)
+	CubieModel::CubieModel(int x, int y, int z, CubeType type)
 	{
+		float scaleFactor = type == CubeType::MIRROR ? MIRROR_SCALE : NORMAL_SCALE;
+
 		float SCALE_FACTOR_X = (x - 1) * (scaleFactor * 1.25f) + 1;
 		float SCALE_FACTOR_Y = (y - 1) * (scaleFactor / 2) + 1;
 		float SCALE_FACTOR_Z = (z - 1) * (scaleFactor) + 1;
@@ -27,7 +29,7 @@ namespace rubik
 
 		_scaleMat = glm::scale(glm::mat4(1.0f), scale);
 
-		_translateMat = glm::translate(glm::mat4(1.0f), splitted ? glm::vec3(0) : _pos);
+		_translateMat = glm::translate(glm::mat4(1.0f), type == CubeType::SPLIT ? glm::vec3(0) : _pos);
 
 		_quaternion = glm::quat(glm::vec3(0, 0, 0));
 
@@ -104,5 +106,29 @@ namespace rubik
 	std::vector<glm::vec3> CubieModel::getNormals()
 	{
 		return _faceNormals;
+	}
+
+	void CubieModel::changeType(int x, int y, int z, CubeType newType)
+	{
+		float scaleFactor = newType == CubeType::MIRROR ? MIRROR_SCALE : NORMAL_SCALE;
+
+		float SCALE_FACTOR_X = (x - 1) * (scaleFactor * 1.25f) + 1;
+		float SCALE_FACTOR_Y = (y - 1) * (scaleFactor / 2) + 1;
+		float SCALE_FACTOR_Z = (z - 1) * (scaleFactor) + 1;
+
+		glm::vec3 scale = glm::vec3(SCALE_FACTOR_X, SCALE_FACTOR_Y, SCALE_FACTOR_Z);
+
+		/*
+		 * Position is half the size of the current cubie plus half the center cubie,
+		 * unless the current cubie is the center or the cubie models are parts of a bigger model.
+		 */
+
+		_pos = glm::vec3((x - 1) * (CUBIE_SIZE * (SCALE_FACTOR_X) / 2 + CUBIE_SIZE / 2.0f),
+						 (y - 1) * (CUBIE_SIZE * (SCALE_FACTOR_Y) / 2 + CUBIE_SIZE / 2.0f),
+						 (z - 1) * (CUBIE_SIZE * (SCALE_FACTOR_Z) / 2 + CUBIE_SIZE / 2.0f));
+
+		_scaleMat = glm::scale(glm::mat4(1.0f), scale);
+
+		_translateMat = glm::translate(glm::mat4(1.0f), newType == CubeType::SPLIT ? glm::vec3(0) : _pos);
 	}
 }

@@ -3,7 +3,8 @@
 namespace rubik
 {
 
-	Cube::Cube(bool mirror, bool splitted) : _model(CubeModel(mirror, splitted)), _state(), _centerOrientation(splitted) {}
+	Cube::Cube(CubeType type) : _model(CubeModel(type)), _state(), _type(type),
+								_centerOrientation(type == CubeType::SPLIT) {}
 
 	/**
 	 * Update the orientation of the cube.
@@ -30,7 +31,6 @@ namespace rubik
 	 */
 	void Cube::turnFace(Move move)
 	{
-
 		_model.turnFace(move);
 		_state = _state.applyMove(move._type);
 	}
@@ -41,7 +41,6 @@ namespace rubik
 	 */
 	void Cube::turnCube(glm::vec2 delta)
 	{
-
 		_model.turnCube(delta);
 	}
 
@@ -50,7 +49,6 @@ namespace rubik
 	 */
 	void Cube::solve()
 	{
-
 		_solving = true;
 
 		std::queue<Move> solution = optimizeSolution(thistlethwaiteKociemba(_state));
@@ -99,7 +97,6 @@ namespace rubik
 	 */
 	void Cube::mix()
 	{
-
 		/* Mix between 40 and 60 moves. */
 		int lengthOfMix = rand() % 20 + 40;
 
@@ -109,6 +106,10 @@ namespace rubik
 
 			turnFace(randomMove);
 		}
+	}
+
+	void Cube::changeType(CubeType type)
+	{
 	}
 
 	/**

@@ -63,7 +63,6 @@ glm::vec2 Mouse::getDrag()
  */
 float Mouse::getScroll()
 {
-
     float ret = _totalScroll;
     _totalScroll = 0;
 

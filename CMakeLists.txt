@@ -21,7 +21,7 @@ add_definitions(-DDIRECTORY_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}\")
 
 include_directories("include")
 include_directories("deps/GLM/")
-# include_directories(${IMGUI_DIR})
+include_directories("deps/imgui/")
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
 	include_directories("deps/GLFW/include")

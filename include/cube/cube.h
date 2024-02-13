@@ -14,11 +14,12 @@ namespace rubik
 	{
 		CubeModel _model;
 		CubeState _state;
+		CubeType _type;
 		bool _solving = false;
 		bool _centerOrientation;
 
 	public:
-		Cube(bool mirror, bool splitted);
+		Cube(CubeType type);
 		void update();
 		void render(const std::vector<Vao> &vaos, int programId);
 		void turnFace(Move move);
@@ -26,6 +27,7 @@ namespace rubik
 		void solve();
 		bool isSolving();
 		void mix();
+		void changeType(CubeType newType);
 
 		friend std::ostream &operator<<(std::ostream &s, const Cube &cube);
 	};
