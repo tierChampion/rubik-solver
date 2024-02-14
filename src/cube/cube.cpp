@@ -6,6 +6,8 @@ namespace rubik
 	Cube::Cube(CubeType type) : _model(CubeModel(type)), _state(), _type(type),
 								_centerOrientation(type == CubeType::SPLIT) {}
 
+	Cube::Cube() : Cube(CubeType::REGULAR) {}
+
 	/**
 	 * Update the orientation of the cube.
 	 */
@@ -108,8 +110,10 @@ namespace rubik
 		}
 	}
 
-	void Cube::changeType(CubeType type)
+	void Cube::changeType(CubeType newType)
 	{
+		_model.changeType(newType);
+		_centerOrientation = newType == CubeType::SPLIT;
 	}
 
 	/**

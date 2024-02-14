@@ -20,6 +20,7 @@ namespace rubik
 
 	public:
 		Cube(CubeType type);
+		Cube();
 		void update();
 		void render(const std::vector<Vao> &vaos, int programId);
 		void turnFace(Move move);

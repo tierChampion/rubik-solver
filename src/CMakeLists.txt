@@ -4,7 +4,8 @@
 
 # Add source to this project's executable.
 add_executable (RubikSolver 
-"app.cpp" 
+"main.cpp" 
+"app.cpp"
 "cube/cube.cpp"
 "cube/cubemodel.cpp"
 "cube/cubiemodel.cpp"

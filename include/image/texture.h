@@ -15,6 +15,7 @@ class Texture
 	unsigned char *_pixels;
 
 public:
+	Texture();
 	Texture(const char *filepath);
 	bool load(const char *filepath);
 	void passToOpenGL();

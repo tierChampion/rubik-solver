@@ -1,5 +1,8 @@
 #include "ui/mouse.h"
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+
 /**
  * Callback for the mouse buttons events.
  * @param window - GLFW window
@@ -8,6 +11,11 @@
  */
 void Mouse::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
+    ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.WantCaptureMouse)
+        return;
 
     if (button == GLFW_MOUSE_BUTTON_1)
     {

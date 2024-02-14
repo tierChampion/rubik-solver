@@ -15,6 +15,9 @@ Texture::Texture(const char *filepath) : _width(0), _height(0), _bpp(0), _pixels
 	}
 }
 
+Texture::Texture() : _width(0), _height(0), _bpp(0), _pixels(nullptr)
+{}
+
 /**
  * Read the file and set the parameters of the texture
  * @param filepath - path of the image file to read
