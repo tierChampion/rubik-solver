@@ -14,9 +14,9 @@
 
 #include "helper_gl.h"
 
-#include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <imfilebrowser.h>
 
 #include <thread>
 
@@ -217,6 +217,13 @@ bool Application::initImGui()
     ImGui_ImplGlfw_InitForOpenGL(_window->getWindow(), true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
+    _browser = ImGui::FileBrowser();
+    _browser.SetTitle("Search for OBJ");
+    _browser.SetTypeFilters({".obj"});
+
+    _browser.Open();
+    _browserOpen = false;
+
     return true;
 }
 
@@ -308,9 +315,6 @@ void Application::renderImGuiMenuBar()
                 case rubik::CubeType::REGULAR:
                     setCubeType(rubik::CubeType::MIRROR);
                     break;
-                case rubik::CubeType::MIRROR:
-                    setCubeType(rubik::CubeType::SPLIT);
-                    break;
                 default:
                     setCubeType(rubik::CubeType::REGULAR);
                     break;
@@ -318,6 +322,10 @@ void Application::renderImGuiMenuBar()
                 applyCubeType();
             }
 
+            if (ImGui::MenuItem("split"))
+            {
+                _browserOpen = true;
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Help"))
@@ -326,5 +334,22 @@ void Application::renderImGuiMenuBar()
         }
 
         ImGui::EndMainMenuBar();
+
+        if (_browserOpen)
+        {
+            _browser.Display();
+
+            if (_browser.HasSelected())
+            {
+                _objPath = _browser.GetSelected().filename().string();
+
+                setCubeType(rubik::CubeType::SPLIT);
+                applyCubeType();
+
+                _browser.ClearSelected();
+                _browserOpen = false;
+            }
+        }
     }
 }
+

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <glm/vec3.hpp>
+#include <imgui.h>
+#include <imfilebrowser.h>
 
 #include "cube/cube.h"
 #include "image/texture.h"
@@ -30,6 +32,9 @@ class Application
     GLint _texLocation, _vpLocation, _camPosLocation, _refLocation, _shineLocation;
 
     int _frame;
+
+    bool _browserOpen;
+    ImGui::FileBrowser _browser;
 
 public:
     static Application &getInstance();
