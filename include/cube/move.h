@@ -56,7 +56,7 @@ namespace rubik
 		Move(int face, int turns);
 		Move(MoveType t);
 
-		int code() const;
+		uint8_t code() const;
 
 		int getTurns() const;
 

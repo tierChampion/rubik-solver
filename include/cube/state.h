@@ -63,6 +63,20 @@ namespace rubik
 	const static unsigned int NUM_CENTERS = 6;
 	const static unsigned int TOTAL_NUM_CUBIES = NUM_EDGES + NUM_CORNERS;
 
+	struct TKMetrics
+	{
+		uint16_t m1;
+		uint16_t m2;
+		uint16_t m3;
+		uint16_t m4;
+	};
+
+	bool operator<(const TKMetrics &ma, const TKMetrics &mb);
+
+	bool operator==(const TKMetrics &ma, const TKMetrics &mb);
+	
+	bool operator!=(const TKMetrics &ma, const TKMetrics &mb);
+
 	class CubeState
 	{
 		std::vector<uint8_t> _state;
@@ -70,8 +84,8 @@ namespace rubik
 	public:
 		CubeState();
 		CubeState(std::vector<uint8_t> &s);
-		CubeState applyMove(const Move& move) const;
-		std::vector<uint16_t> thistlethwaiteKociembaId(unsigned int phase) const;
+		CubeState applyMove(const Move &move) const;
+		TKMetrics thistlethwaiteKociembaId(unsigned int phase) const;
 		int size() const;
 
 		bool operator<(const CubeState &other_state) const;

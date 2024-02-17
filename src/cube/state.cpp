@@ -21,7 +21,7 @@ namespace rubik
 	 * Calculate the new state after a given move is applied.
 	 * @param move - move to apply
 	 */
-	CubeState CubeState::applyMove(const Move& move) const
+	CubeState CubeState::applyMove(const Move &move) const
 	{
 		int turns = move.getTurns();
 		int face = move.getFace();
@@ -93,40 +93,39 @@ namespace rubik
 	 * Compute the metrics for the thistlethwaite-kociemba algorithm depending on the phase.
 	 * @param phase - current phase of the algorithm
 	 */
-	std::vector<uint16_t> CubeState::thistlethwaiteKociembaId(unsigned int phase) const
+	TKMetrics CubeState::thistlethwaiteKociembaId(unsigned int phase) const
 	{
-
+		TKMetrics metrics{0, 0, 0, 0};
 		// Phase 1: Orientations and middle slice edges
 		if (phase == 0)
 		{
 
 			// Orientation of the corners
-			std::vector<uint16_t> metrics(4, 0);
 			for (int e = TOTAL_NUM_CUBIES + NUM_EDGES; e < 2 * TOTAL_NUM_CUBIES; e++)
 			{
-				metrics[0] *= 3;
-				metrics[0] += _state[e];
+				metrics.m1 *= 3;
+				metrics.m1 += _state[e];
 			}
 
 			// Store a bit of 1 at the position of the edges
 			// in the slice between Red(U) and Orange(D) in their solved state
 			// Place all the middle edges in their slice
 			for (int e = 0; e < NUM_EDGES; e++)
-				metrics[1] |= (_state[e] / (NUM_EDGES - NUM_MIDDLE_EDGES)) << e;
+				metrics.m2 |= (_state[e] / (NUM_EDGES - NUM_MIDDLE_EDGES)) << e;
 
 			// Orientation of the edges
 			for (int e = TOTAL_NUM_CUBIES; e < TOTAL_NUM_CUBIES + NUM_EDGES - 1; e++)
 			{
-				metrics[2] *= 2;
-				metrics[2] += _state[e];
+				metrics.m3 *= 2;
+				metrics.m3 += _state[e];
 			}
 
 			// Rough orientation of the F, B, L and R centers. Must be a half-turn
 			// away from solved
 			for (int c = 2; c < NUM_CENTERS; c++)
 			{
-				metrics[3] *= 2;
-				metrics[3] += _state[2 * TOTAL_NUM_CUBIES + c] & 0b1;
+				metrics.m4 *= 2;
+				metrics.m4 += _state[2 * TOTAL_NUM_CUBIES + c] & 0b1;
 			}
 
 			return metrics;
@@ -135,19 +134,17 @@ namespace rubik
 		// Phase 3: Consider the rough position of the edges, the rough position of the corners
 		else if (phase == 1)
 		{
-			std::vector<uint16_t> metrics(3);
-
 			// Store '11' for edges in the middle slice or either '01' or '00' for other edges
 			// depending on if they are odd or even.
 			// Checks overall edge location
 			for (int e = 0; e < NUM_EDGES; e++)
-				metrics[0] |= ((_state[e] >= 8) ? 0b11 : ((int)(_state[e] & 0b1)) << (2 * e));
+				metrics.m1 |= ((_state[e] >= 8) ? 0b11 : ((int)(_state[e] & 0b1)) << (2 * e));
 
 			// Store '1' as the first bit if the corner is on the bottom slice.
 			// Store '1' as the third bit if the corner is on the diagonal L->R/F->B
 			// Checks if the corner is in the correct slice and on the right diagonal
 			for (int c = 0; c < NUM_CORNERS; c++)
-				metrics[1] |= ((int)(_state[c + NUM_EDGES] - NUM_EDGES) & 0b101) << (3 * c);
+				metrics.m2 |= ((int)(_state[c + NUM_EDGES] - NUM_EDGES) & 0b101) << (3 * c);
 
 			// Check if the number of permutations between corners is even.
 			// From a solved state, if pairs of corners where swapped an odd
@@ -157,7 +154,7 @@ namespace rubik
 			{
 				for (int j = i + 1; j < TOTAL_NUM_CUBIES; j++)
 				{
-					metrics[2] ^= (_state[i] > _state[j]);
+					metrics.m3 ^= (_state[i] > _state[j]);
 				}
 			}
 
@@ -165,7 +162,6 @@ namespace rubik
 		}
 
 		// Phase 4: Consider the positions of each cubies
-		std::vector<uint16_t> metrics(4, 0);
 
 		// Corner permutations
 		for (int i = NUM_CORNERS - 1; i >= 1; i--)
@@ -173,10 +169,10 @@ namespace rubik
 
 			for (int j = i - 1; j >= 0; j--)
 			{
-				metrics[0] += (_state[i + NUM_EDGES] < _state[j + NUM_EDGES]);
+				metrics.m1 += (_state[i + NUM_EDGES] < _state[j + NUM_EDGES]);
 			}
 
-			metrics[0] *= i;
+			metrics.m1 *= i;
 		}
 
 		// Top and bottom edge permutations
@@ -185,10 +181,10 @@ namespace rubik
 
 			for (int j = i - 1; j >= 0; j--)
 			{
-				metrics[1] += (_state[i] < _state[j]);
+				metrics.m2 += (_state[i] < _state[j]);
 			}
 
-			metrics[1] *= i;
+			metrics.m2 *= i;
 		}
 
 		// Middle slice permutations
@@ -197,17 +193,17 @@ namespace rubik
 
 			for (int j = i - 1; j >= 0; j--)
 			{
-				metrics[2] += (_state[i + 8] < _state[j + 8]);
+				metrics.m3 += (_state[i + 8] < _state[j + 8]);
 			}
 
-			metrics[2] *= i;
+			metrics.m3 *= i;
 		}
 
 		// Rough orientation of the U and D centers.
 		for (int c = 0; c < 2; c++)
 		{
-			metrics[3] *= 2;
-			metrics[3] += _state[2 * TOTAL_NUM_CUBIES + c] & 1;
+			metrics.m4 *= 2;
+			metrics.m4 += _state[2 * TOTAL_NUM_CUBIES + c] & 1;
 		}
 
 		return metrics;
@@ -244,5 +240,19 @@ namespace rubik
 		}
 
 		return s << "\n";
+	}
+
+	bool operator<(const TKMetrics &ma, const TKMetrics &mb)
+	{
+		return std::tie(ma.m1, ma.m2, ma.m3, ma.m4) < std::tie(mb.m1, mb.m2, mb.m3, mb.m4);
+	}
+
+	bool operator==(const TKMetrics &ma, const TKMetrics &mb)
+	{
+		return std::tie(ma.m1, ma.m2, ma.m3, ma.m4) == std::tie(mb.m1, mb.m2, mb.m3, mb.m4);
+	}
+	bool operator!=(const TKMetrics &ma, const TKMetrics &mb)
+	{
+		return !(ma == mb);
 	}
 }

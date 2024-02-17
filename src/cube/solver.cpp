@@ -16,6 +16,9 @@ namespace rubik
 	 */
 	std::vector<Move> thistlethwaiteKociemba(CubeState problem)
 	{
+
+		// MAKE THINGS WORK WITH THE TKMETRICS
+
 		std::vector<Move> solution;
 		CubeState currentState = problem;
 
@@ -24,9 +27,17 @@ namespace rubik
 
 		int phase = 0;
 
+		// State allong with the state that was used to reach it
+		std::map<TKMetrics, TKMetrics> predecessor;
+		// Direction from which the state was reached. Largest bit set to 1 if the state was reached from
+		// the scrambled state and before largest bit to 1 if it was reached from the solved state. A direction
+		// of 0 means that the state was never reached before.
+		// Move that was used to reach the state
+		std::map<TKMetrics, uint8_t> direction;
+
 		while (phase < THISTLETHWAITE_KOCIEMBA_PHASE_COUNT)
 		{
-			std::vector<uint16_t> currentId = currentState.thistlethwaiteKociembaId(phase),
+			TKMetrics currentId = currentState.thistlethwaiteKociembaId(phase),
 								  goalId = goalState.thistlethwaiteKociembaId(phase);
 
 			// Skip the phase if already solved
@@ -42,19 +53,8 @@ namespace rubik
 			q.push(goalState);
 
 			/* BFS TABLES */
-
-			// State allong with the state that was used to reach it
-			std::map<std::vector<uint16_t>, std::vector<uint16_t>> predecessor;
-
-			// Direction from which the state was reached. 1 if the state was reached from
-			// the scrambled state and -1 if it was reached from the solved state. A direction
-			// of 0 means that the state was never reached before.
-			std::map<std::vector<uint16_t>, int8_t> direction;
-			direction[currentId] = 1;
-			direction[goalId] = -1;
-
-			// Move that was used to reach the state
-			std::map<std::vector<uint16_t>, Move> lastMove;
+			direction[currentId] |= 0x80;
+			direction[goalId] |= 0x40;
 
 			bool finishedPhase = false;
 
@@ -64,11 +64,11 @@ namespace rubik
 				CubeState oldState = q.front();
 				q.pop();
 
-				std::vector<uint16_t> oldId = oldState.thistlethwaiteKociembaId(phase);
-				int8_t &oldDir = direction[oldId];
+				TKMetrics oldId = oldState.thistlethwaiteKociembaId(phase);
+				uint8_t &oldDir = direction[oldId];
 
 				// Explore all the legal moves for new states
-				for (int m = 0; m < NUM_POSSIBLE_MOVES && !finishedPhase; m++)
+				for (uint8_t m = 0; m < NUM_POSSIBLE_MOVES && !finishedPhase; m++)
 				{
 					if (THISTLETHWAITE_MOVES[phase] & (1 << m))
 					{
@@ -76,18 +76,20 @@ namespace rubik
 
 						CubeState newState = oldState.applyMove(move);
 
-						std::vector<uint16_t> newId = newState.thistlethwaiteKociembaId(phase);
-						int8_t &newDir = direction[newId];
+						TKMetrics newId = newState.thistlethwaiteKociembaId(phase);
+						uint8_t &newDir = direction[newId];
 
 						// The new state has already been seen and it has a different direction.
 						// This means that the scrambled and solved states are now connected.
-						if (newDir && newDir != oldDir)
+						if ((newDir & 0xC0 != 0) && (newDir & 0xC0) != (oldDir & 0xC0))
 						{
-
 							// If the state comes from the solved state, invert the moves.
-							if (oldDir < 0)
+							if ((oldDir & 0x40) == 0x40)
 							{
-								swap(newId, oldId);
+								// swap(newId, oldId);
+								TKMetrics temp = oldId;
+								oldId = newId;
+								newId = temp;
 								move = move.inverse();
 							}
 
@@ -96,15 +98,16 @@ namespace rubik
 							// Connect the positive path
 							while (oldId != currentId)
 							{
-
-								algorithm.insert(algorithm.begin(), lastMove[oldId]);
+								// algorithm.insert(algorithm.begin(), lastMove[oldId]);
+								algorithm.insert(algorithm.begin(), Move(direction[oldId] & 0x3F));
 								oldId = predecessor[oldId];
 							}
 
 							// Connect the negative path
 							while (newId != goalId)
 							{
-								algorithm.push_back(lastMove[newId].inverse());
+								// algorithm.push_back(lastMove[newId].inverse());
+								algorithm.push_back(Move(direction[newId] & 0x3F).inverse());
 								newId = predecessor[newId];
 							}
 
@@ -115,6 +118,9 @@ namespace rubik
 								currentState = currentState.applyMove(algorithm[i]);
 							}
 
+							predecessor.clear();
+							direction.clear();
+
 							finishedPhase = true;
 						}
 
@@ -122,8 +128,7 @@ namespace rubik
 						if (!newDir)
 						{
 							q.push(newState);
-							newDir = oldDir;
-							lastMove[newId] = move;
+							newDir = ((oldDir & 0xC0) | (move.code() & 0x3F));
 							predecessor[newId] = oldId;
 						}
 					}

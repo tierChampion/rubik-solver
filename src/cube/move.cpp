@@ -19,7 +19,7 @@ namespace rubik
         _type = t;
     }
 
-    int Move::code() const
+    uint8_t Move::code() const
     {
         return _type;
     }
@@ -98,12 +98,10 @@ namespace rubik
      */
     bool Move::affectsPiece(const std::vector<glm::vec3> normals) const
     {
-
         int face = getFace();
 
         for (int i = 0; i < normals.size(); i++)
         {
-
             glm::vec3 normal = normals[i];
 
             if ((face == 0 && normal[1] > 0) ||
@@ -125,7 +123,6 @@ namespace rubik
      */
     std::ostream &operator<<(std::ostream &s, const Move &move)
     {
-
         int face = move.getFace();
         int turns = move.getTurns();
 
