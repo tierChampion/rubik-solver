@@ -4,9 +4,20 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include <chrono>
+#include <deque>
 
 namespace rubik
 {
+	struct TKInformation
+	{
+		// State that was used to reach the current state
+		TKMetrics pred;
+		// Direction from which the state was reached (10 for unsolved, 01 for solved)
+		// and Move used to reach it
+		uint8_t directionMove;
+	};
+
 	/**
 	 * Compute an algorithm to solve the current scrambled state of the cube
 	 * by using a mix between Thistlethwaite's and Kociemba's algorithm. Averages around 28 moves.
@@ -14,31 +25,26 @@ namespace rubik
 	 * the first one is similar to the Thistlethwaite while the second phase is the Kociemba's.
 	 * @param problem - state of the cube to solve
 	 */
-	std::vector<Move> thistlethwaiteKociemba(CubeState problem)
+	std::queue<Move> thistlethwaiteKociemba(Cube *cube, CubeState problem)
 	{
+		auto start = std::chrono::steady_clock::now();
 
-		// MAKE THINGS WORK WITH THE TKMETRICS
-
-		std::vector<Move> solution;
+		std::deque<Move> solution;
 		CubeState currentState = problem;
 
 		// Initialise the goal state to the solved state [0, 1, ..., 19 / 0, 0, ..., 0]
 		CubeState goalState;
 
+		Move lastMove = Move(-1);
+
 		int phase = 0;
 
-		// State allong with the state that was used to reach it
-		std::map<TKMetrics, TKMetrics> predecessor;
-		// Direction from which the state was reached. Largest bit set to 1 if the state was reached from
-		// the scrambled state and before largest bit to 1 if it was reached from the solved state. A direction
-		// of 0 means that the state was never reached before.
-		// Move that was used to reach the state
-		std::map<TKMetrics, uint8_t> direction;
+		std::map<TKMetrics, TKInformation> searchedSpace;
 
 		while (phase < THISTLETHWAITE_KOCIEMBA_PHASE_COUNT)
 		{
 			TKMetrics currentId = currentState.thistlethwaiteKociembaId(phase),
-								  goalId = goalState.thistlethwaiteKociembaId(phase);
+					  goalId = goalState.thistlethwaiteKociembaId(phase);
 
 			// Skip the phase if already solved
 			if (currentId == goalId)
@@ -53,8 +59,8 @@ namespace rubik
 			q.push(goalState);
 
 			/* BFS TABLES */
-			direction[currentId] |= 0x80;
-			direction[goalId] |= 0x40;
+			searchedSpace[currentId].directionMove |= 0x80;
+			searchedSpace[goalId].directionMove |= 0x40;
 
 			bool finishedPhase = false;
 
@@ -65,7 +71,7 @@ namespace rubik
 				q.pop();
 
 				TKMetrics oldId = oldState.thistlethwaiteKociembaId(phase);
-				uint8_t &oldDir = direction[oldId];
+				uint8_t &oldDir = searchedSpace[oldId].directionMove;
 
 				// Explore all the legal moves for new states
 				for (uint8_t m = 0; m < NUM_POSSIBLE_MOVES && !finishedPhase; m++)
@@ -77,7 +83,7 @@ namespace rubik
 						CubeState newState = oldState.applyMove(move);
 
 						TKMetrics newId = newState.thistlethwaiteKociembaId(phase);
-						uint8_t &newDir = direction[newId];
+						uint8_t &newDir = searchedSpace[newId].directionMove;
 
 						// The new state has already been seen and it has a different direction.
 						// This means that the scrambled and solved states are now connected.
@@ -86,7 +92,6 @@ namespace rubik
 							// If the state comes from the solved state, invert the moves.
 							if ((oldDir & 0x40) == 0x40)
 							{
-								// swap(newId, oldId);
 								TKMetrics temp = oldId;
 								oldId = newId;
 								newId = temp;
@@ -98,29 +103,45 @@ namespace rubik
 							// Connect the positive path
 							while (oldId != currentId)
 							{
-								// algorithm.insert(algorithm.begin(), lastMove[oldId]);
-								algorithm.insert(algorithm.begin(), Move(direction[oldId] & 0x3F));
-								oldId = predecessor[oldId];
+								algorithm.insert(algorithm.begin(), Move(searchedSpace[oldId].directionMove & 0x3F));
+								oldId = searchedSpace[oldId].pred;
 							}
 
 							// Connect the negative path
 							while (newId != goalId)
 							{
-								// algorithm.push_back(lastMove[newId].inverse());
-								algorithm.push_back(Move(direction[newId] & 0x3F).inverse());
-								newId = predecessor[newId];
+								algorithm.push_back(Move(searchedSpace[newId].directionMove & 0x3F).inverse());
+								newId = searchedSpace[newId].pred;
 							}
 
-							// Apply the algorithm to the srambled state
-							for (int i = 0; i < algorithm.size(); i++)
+							if (solution.size() > 0)
 							{
-								solution.push_back(algorithm[i]);
-								currentState = currentState.applyMove(algorithm[i]);
+								currentState = currentState.applyMove(lastMove.inverse());
+								algorithm.insert(algorithm.begin(), lastMove);
+								solution.pop_back();
 							}
 
-							predecessor.clear();
-							direction.clear();
+							std::queue<Move> optimized = optimizeSolution(algorithm);
+							int totalSize = optimized.size();
 
+							// Apply the algorithm to the scrambled state
+							for (int i = 0; i < totalSize; i++)
+							{
+								Move newMove = optimized.front();
+								optimized.pop();
+								solution.push_back(newMove);
+								currentState = currentState.applyMove(newMove);
+
+								if (i != totalSize - 1)
+								{
+									cube->turnFace(newMove);
+								}
+								else
+								{
+									lastMove = newMove;
+								}
+							}
+							searchedSpace.clear();
 							finishedPhase = true;
 						}
 
@@ -129,15 +150,25 @@ namespace rubik
 						{
 							q.push(newState);
 							newDir = ((oldDir & 0xC0) | (move.code() & 0x3F));
-							predecessor[newId] = oldId;
+							searchedSpace[newId].pred = oldId;
 						}
 					}
 				}
 			}
 			phase++;
 		}
+		if (solution.size() > 0)
+		{
+			cube->turnFace(lastMove);
+		}
 
-		return solution;
+		auto end = std::chrono::steady_clock::now();
+
+		std::chrono::duration<double> duration = end - start;
+
+		std::cout << "Time: " << duration.count() << " seconds" << std::endl;
+
+		return std::queue(solution);
 	}
 
 	/**
@@ -213,6 +244,7 @@ namespace rubik
 				 * Step through the moves and group consecutive moves that turn the same face.
 				 * Also jump over opposite face turns since they don't modify the turn.
 				 */
+
 				if (solution[pos].getAxis() == current.getAxis())
 				{
 					if (face == solution[pos].getFace())
@@ -231,7 +263,9 @@ namespace rubik
 
 			turns %= 4;
 			if (turns != 0)
+			{
 				optimisation.push(Move(face, turns));
+			}
 		}
 
 		return optimisation;

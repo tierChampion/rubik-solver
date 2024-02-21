@@ -19,6 +19,7 @@
 #include <imfilebrowser.h>
 
 #include <thread>
+#include <unistd.h>
 
 #include "ui/window.h"
 #include "ui/keyboard.h"
@@ -120,6 +121,7 @@ int Application::launch()
         {
             std::thread solvingThread(&rubik::Cube::solve, &_cube);
             solvingThread.detach();
+            sleep(1);
             _frame = 0;
         }
 

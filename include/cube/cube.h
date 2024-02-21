@@ -6,7 +6,6 @@
 #include "model.h"
 #include "state.h"
 #include "move.h"
-#include "solver.h"
 
 namespace rubik
 {
@@ -23,7 +22,7 @@ namespace rubik
 		Cube();
 		void update();
 		void render(const std::vector<Vao> &vaos, int programId);
-		void turnFace(Move move);
+		void turnFace(const Move move);
 		void turnCube(glm::vec2 delta);
 		void solve();
 		bool isSolving();

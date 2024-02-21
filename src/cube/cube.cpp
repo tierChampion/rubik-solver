@@ -1,5 +1,7 @@
 #include "cube/cube.h"
 
+#include "cube/solver.h"
+
 namespace rubik
 {
 
@@ -23,7 +25,6 @@ namespace rubik
 	 */
 	void Cube::render(const std::vector<Vao> &vaos, int programId)
 	{
-
 		_model.render(vaos, programId);
 	}
 
@@ -31,10 +32,10 @@ namespace rubik
 	 * Execute a move on the cube.
 	 * @param move - the move to execute
 	 */
-	void Cube::turnFace(Move move)
+	void Cube::turnFace(const Move move)
 	{
 		_model.turnFace(move);
-		_state = _state.applyMove(move._type);
+		_state = _state.applyMove(move);
 	}
 
 	/**
@@ -53,7 +54,7 @@ namespace rubik
 	{
 		_solving = true;
 
-		std::queue<Move> solution = optimizeSolution(thistlethwaiteKociemba(_state));
+		std::queue<Move> solution = thistlethwaiteKociemba(this, _state);
 
 		// Show the solution in the terminal
 		if (!solution.empty())
@@ -64,7 +65,7 @@ namespace rubik
 			{
 				Move move = solution.front();
 				std::cout << move << " ";
-				turnFace(move);
+				// turnFace(move);
 				solution.pop();
 			}
 

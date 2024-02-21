@@ -74,7 +74,7 @@ namespace rubik
 		CubeModel(CubeType type);
 		bool render(const std::vector<Vao> &vaos, int programId);
 		void update();
-		void turnFace(Move move);
+		void turnFace(const Move& move);
 		void turnCube(glm::vec2 delta);
 		void changeType(CubeType newType);
 

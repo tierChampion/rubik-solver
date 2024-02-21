@@ -98,7 +98,7 @@ namespace rubik
 	 *
 	 * @param move -> move to add to the queue
 	 */
-	void CubeModel::turnFace(Move move)
+	void CubeModel::turnFace(const Move& move)
 	{
 		_moves.push(move);
 
