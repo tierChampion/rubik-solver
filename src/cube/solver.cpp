@@ -132,6 +132,8 @@ namespace rubik
 								solution.push_back(newMove);
 								currentState = currentState.applyMove(newMove);
 
+								// Dont apply last move of the phase to the physical cube.
+								// It can sometimes be optimized and remove useless moves.
 								if (i != totalSize - 1)
 								{
 									cube->turnFace(newMove);

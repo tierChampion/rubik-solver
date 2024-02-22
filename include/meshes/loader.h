@@ -86,5 +86,5 @@ namespace splr {
 		}
 	};
 
-	bool loadObj(const char* path, MeshData& finalMesh);
+	bool loadObj(std::string path, MeshData& finalMesh);
 }

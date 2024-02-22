@@ -25,6 +25,7 @@
 #include "ui/keyboard.h"
 #include "ui/mouse.h"
 #include "meshes/meshsplitter.h"
+#include "logging/algoparser.h"
 
 const static unsigned int W_WIDTH = 1280;
 const static unsigned int W_HEIGHT = 720;
@@ -121,7 +122,7 @@ int Application::launch()
         {
             std::thread solvingThread(&rubik::Cube::solve, &_cube);
             solvingThread.detach();
-            sleep(1);
+            // wait?
             _frame = 0;
         }
 
@@ -219,12 +220,19 @@ bool Application::initImGui()
     ImGui_ImplGlfw_InitForOpenGL(_window->getWindow(), true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    _browser = ImGui::FileBrowser();
-    _browser.SetTitle("Search for OBJ");
-    _browser.SetTypeFilters({".obj"});
+    _cubeBrowser = ImGui::FileBrowser();
+    _cubeBrowser.SetTitle("Search for OBJ");
+    _cubeBrowser.SetTypeFilters({".obj"});
 
-    _browser.Open();
-    _browserOpen = false;
+    _cubeBrowser.Open();
+    _cubeBrowserOpen = false;
+
+    _algoBrowser = ImGui::FileBrowser();
+    _algoBrowser.SetTitle("Search for algorithm");
+    _algoBrowser.SetTypeFilters({".algo"});
+
+    _algoBrowser.Open();
+    _algoBrowserOpen = false;
 
     return true;
 }
@@ -234,7 +242,7 @@ void Application::loadMeshes()
     _vaos.clear();
 
     splr::MeshData originalMesh;
-    bool found = splr::loadObj((_projPath + "/res/" + _objPath).c_str(), originalMesh);
+    bool found = splr::loadObj(_objPath, originalMesh);
 
     if (!found)
     {
@@ -262,25 +270,25 @@ void Application::setCubeType(rubik::CubeType type)
     switch (_type)
     {
     case rubik::CubeType::MIRROR:
-        _texturePath = "mirror.png";
-        _objPath = "cubie.obj";
+        _texturePath = _projPath + "/res/Textures/mirror.png";
+        _objPath = _projPath + "/res/cubie.obj";
         _cameraPos = glm::vec3(0, 0, 30);
         _reflectivity = 0.8f;
         _shineDamper = 5.0f;
         break;
 
     case rubik::CubeType::SPLIT:
-        _texturePath = "split.png";
-        if (_objPath == "" || _objPath == "cubie.obj")
-            _objPath = "ghost.obj";
+        _texturePath = _projPath + "/res/Textures/cubie.png";
+        if (_objPath == "" || _objPath == _projPath + "/res/cubie.obj")
+            _objPath = _projPath + "/res/ghost.obj";
         _cameraPos = glm::vec3(0, 0, 40);
         _reflectivity = 0.8f;
         _shineDamper = 0.6f;
         break;
 
     default:
-        _texturePath = "cubie.png";
-        _objPath = "cubie.obj";
+        _texturePath = _projPath + "/res/Textures/cubie.png";
+        _objPath = _projPath + "/res/cubie.obj";
         _cameraPos = glm::vec3(0, 0, 30);
         _reflectivity = 0.0f;
         _shineDamper = 5.0f;
@@ -290,7 +298,7 @@ void Application::setCubeType(rubik::CubeType type)
 
 void Application::applyCubeType()
 {
-    _img = Texture((_projPath + "/res/Textures/" + _texturePath).c_str());
+    _img = Texture(_texturePath.c_str());
     _img.passToOpenGL();
     _img.bind(0);
 
@@ -326,32 +334,56 @@ void Application::renderImGuiMenuBar()
 
             if (ImGui::MenuItem("split"))
             {
-                _browserOpen = true;
+                _cubeBrowserOpen = true;
+                _cubeBrowser.Open();
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Help"))
+        if (ImGui::BeginMenu("Algorithms"))
         {
+            if (ImGui::MenuItem("Import Algorithms"))
+            {
+                _algoBrowserOpen = true;
+                _algoBrowser.Open();
+            }
             ImGui::EndMenu();
         }
 
         ImGui::EndMainMenuBar();
 
-        if (_browserOpen)
+        if (_cubeBrowserOpen)
         {
-            _browser.Display();
+            _cubeBrowser.Display();
 
-            if (_browser.HasSelected())
+            if (_cubeBrowser.HasSelected())
             {
-                _objPath = _browser.GetSelected().filename().string();
+                _objPath = _cubeBrowser.GetSelected();
 
                 setCubeType(rubik::CubeType::SPLIT);
                 applyCubeType();
 
-                _browser.ClearSelected();
-                _browserOpen = false;
+                _cubeBrowser.ClearSelected();
+                _cubeBrowserOpen = false;
+            }
+        }
+        if (_algoBrowserOpen)
+        {
+            _algoBrowser.Display();
+
+            if (_algoBrowser.HasSelected())
+            {
+                std::string algoPath = _algoBrowser.GetSelected();
+
+                std::vector<rubik::Move> algo = parsing::parseAlgorithm(algoPath);
+
+                for (auto move : algo)
+                {
+                    _cube.turnFace(move);
+                }
+
+                _algoBrowser.ClearSelected();
+                _algoBrowserOpen = false;
             }
         }
     }
 }
-

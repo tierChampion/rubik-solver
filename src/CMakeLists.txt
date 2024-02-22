@@ -24,6 +24,7 @@ add_executable (RubikSolver
 "meshes/triangulation.cpp"
 "opengl/camera.cpp"
 "opengl/vao.cpp"
+"logging/algoparser.cpp"
 "../deps/imgui/imgui.cpp"
 "../deps/imgui/imgui_demo.cpp"
 "../deps/imgui/imgui_draw.cpp"

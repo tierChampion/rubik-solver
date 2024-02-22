@@ -1,5 +1,8 @@
 #include "ui/keyboard.h"
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+
 /**
  * Getter for the last keyboard move
  * @param window - GLFW window
@@ -43,6 +46,11 @@ void Keyboard::turningCube_KeyCallback(
 	int action,
 	int mods)
 {
+	ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
+
+    ImGuiIO &io = ImGui::GetIO();
+    if (io.WantCaptureKeyboard)
+        return;
 
 	if (action == GLFW_PRESS)
 	{

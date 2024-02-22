@@ -33,8 +33,11 @@ class Application
 
     int _frame;
 
-    bool _browserOpen;
-    ImGui::FileBrowser _browser;
+    bool _cubeBrowserOpen;
+    ImGui::FileBrowser _cubeBrowser;
+
+    bool _algoBrowserOpen;
+    ImGui::FileBrowser _algoBrowser;
 
 public:
     static Application &getInstance();
