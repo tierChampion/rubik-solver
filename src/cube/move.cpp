@@ -136,6 +136,11 @@ namespace rubik
         char turnName = '\'' * (turns == 3) +
                         '2' * (turns == 2);
 
-        return s << faceName << turnName;
+        s << faceName;
+        if (turns > 2)
+        {
+            s << turnName;
+        }
+        return s;
     }
 }

@@ -26,13 +26,15 @@ namespace parsing
 
         while ((file >> token) && !errorDetected)
         {
-            // token = trim(token);
+            token = trim(token);
             if (token.length() == 0 || token.length() >= 3)
             {
                 continue;
             }
 
-            switch (std::tolower(token[0]))
+            char lower = static_cast<unsigned char>(std::tolower(static_cast<unsigned char>(token[0])));
+
+            switch (lower)
             {
             case 'u':
                 face = 0;
@@ -54,7 +56,7 @@ namespace parsing
                 break;
 
             default:
-                std::cerr << "ERROR: Move " << token << " parsed from " << filePath << " is not valid." << std::endl;
+                std::cerr << "ERROR: Move " << lower << " parsed from " << filePath << " is not valid." << std::endl;
                 errorDetected = true;
                 break;
             }
@@ -85,4 +87,25 @@ namespace parsing
         return algo;
     }
 
+    void saveProblem(std::string filePath, std::queue<rubik::Move> solution)
+    {
+
+        std::ofstream file(filePath);
+
+        if (!file.is_open())
+        {
+            std::cerr << "ERROR: The given ALGO file (" << filePath << ") cannot be found." << std::endl;
+            return;
+        }
+
+        while (!solution.empty())
+        {
+            rubik::Move move = solution.front();
+            solution.pop();
+
+            file << move.inverse() << " ";
+        }
+
+        file.close();
+    }
 }

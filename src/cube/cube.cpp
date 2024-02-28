@@ -1,6 +1,7 @@
 #include "cube/cube.h"
 
 #include "cube/solver.h"
+#include "logging/algoparser.h"
 
 namespace rubik
 {
@@ -59,6 +60,7 @@ namespace rubik
 		// Show the solution in the terminal
 		if (!solution.empty())
 		{
+			parsing::saveProblem(std::string(DIRECTORY_PATH) + "/res/Algorithms/current.algo", solution);
 			std::cout << "<SOLUTION> " << solution.size() << " moves: ";
 
 			while (solution.size() > 0)

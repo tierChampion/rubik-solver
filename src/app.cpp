@@ -27,7 +27,8 @@
 #include "meshes/meshsplitter.h"
 #include "logging/algoparser.h"
 
-const static unsigned int W_WIDTH = 1280;
+static GLFWmonitor* MONITOR;
+const static unsigned int W_WIDTH = 1080;
 const static unsigned int W_HEIGHT = 720;
 const static char *W_TITLE = "Rubik's cube solver";
 static bool FULL_SCREEN = false;
@@ -138,7 +139,6 @@ int Application::launch()
         /* Zoom in */
         if (glfwGetKey(_window->getWindow(), GLFW_KEY_UP) || scroll > 0)
         {
-
             _cameraPos -= glm::vec3(0, 0, 2);
             _cam.createView(_cameraPos, glm::vec3(0), glm::vec3(0, 1, 0));
 
@@ -206,8 +206,12 @@ bool Application::initGLFW()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+    MONITOR = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(MONITOR);
+    std::cout << "Dimensions: " << mode->width << "x" << mode->height << std::endl;
     // Create GLFW context and window
-    _window = new GameWindow(W_WIDTH, W_HEIGHT, ASPECT_RATIO, W_TITLE, FULL_SCREEN);
+    _window = new GameWindow(mode->width, mode->height, mode->width / float(mode->height), W_TITLE, FULL_SCREEN);
     _window->makeCurrentContext();
     _window->setSwapInterval(1);
     return true;
@@ -303,7 +307,7 @@ void Application::applyCubeType()
     _img.bind(0);
 
     _cam.createView(_cameraPos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-    _cam.createPerspective(FOV, ASPECT_RATIO, NEAR_DIST, FAR_DIST);
+    _cam.createPerspective(FOV, 1920.0 / 1200.0, NEAR_DIST, FAR_DIST);
 
     _cube.changeType(_type);
     loadMeshes();
