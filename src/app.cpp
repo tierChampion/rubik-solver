@@ -27,7 +27,7 @@
 #include "meshes/meshsplitter.h"
 #include "logging/algoparser.h"
 
-static GLFWmonitor* MONITOR;
+static GLFWmonitor *MONITOR;
 const static unsigned int W_WIDTH = 1080;
 const static unsigned int W_HEIGHT = 720;
 const static char *W_TITLE = "Rubik's cube solver";
@@ -100,7 +100,7 @@ int Application::launch()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        renderImGuiMenuBar();
+        renderImGui();
 
         _cube.update();
         _cube.render(_vaos, _program._programId);
@@ -123,7 +123,6 @@ int Application::launch()
         {
             std::thread solvingThread(&rubik::Cube::solve, &_cube);
             solvingThread.detach();
-            // wait?
             _frame = 0;
         }
 
@@ -140,6 +139,8 @@ int Application::launch()
         if (glfwGetKey(_window->getWindow(), GLFW_KEY_UP) || scroll > 0)
         {
             _cameraPos -= glm::vec3(0, 0, 2);
+            if (_cameraPos.z < 10)
+                _cameraPos = glm::vec3(0, 0, 10);
             _cam.createView(_cameraPos, glm::vec3(0), glm::vec3(0, 1, 0));
 
             viewProjection = _cam.getVP();
@@ -149,6 +150,8 @@ int Application::launch()
         else if (glfwGetKey(_window->getWindow(), GLFW_KEY_DOWN) || scroll < 0)
         {
             _cameraPos += glm::vec3(0, 0, 2);
+            if (_cameraPos.z > 90)
+                _cameraPos = glm::vec3(0, 0, 90);
             _cam.createView(_cameraPos, glm::vec3(0), glm::vec3(0, 1, 0));
 
             viewProjection = _cam.getVP();
@@ -208,10 +211,12 @@ bool Application::initGLFW()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
     MONITOR = glfwGetPrimaryMonitor();
-    const GLFWvidmode* mode = glfwGetVideoMode(MONITOR);
-    std::cout << "Dimensions: " << mode->width << "x" << mode->height << std::endl;
+    const GLFWvidmode *mode = glfwGetVideoMode(MONITOR);
+    _width = mode->width;
+    _height = mode->height;
+    _aspectRatio = _width / float(_height);
     // Create GLFW context and window
-    _window = new GameWindow(mode->width, mode->height, mode->width / float(mode->height), W_TITLE, FULL_SCREEN);
+    _window = new GameWindow(_width, _height, _aspectRatio, W_TITLE, FULL_SCREEN);
     _window->makeCurrentContext();
     _window->setSwapInterval(1);
     return true;
@@ -307,7 +312,7 @@ void Application::applyCubeType()
     _img.bind(0);
 
     _cam.createView(_cameraPos, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-    _cam.createPerspective(FOV, 1920.0 / 1200.0, NEAR_DIST, FAR_DIST);
+    _cam.createPerspective(FOV, _aspectRatio, NEAR_DIST, FAR_DIST);
 
     _cube.changeType(_type);
     loadMeshes();
@@ -316,7 +321,7 @@ void Application::applyCubeType()
     glUniform1f(_shineLocation, _shineDamper);
 }
 
-void Application::renderImGuiMenuBar()
+void Application::renderImGui()
 {
     if (ImGui::BeginMainMenuBar())
     {
@@ -389,5 +394,22 @@ void Application::renderImGuiMenuBar()
                 _algoBrowserOpen = false;
             }
         }
+    }
+
+    if (_cube.isSolving())
+    {
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.2f));
+        ImGui::Begin("solving window", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMouseInputs);
+
+        float xPos = (ImGui::GetWindowSize().x - ImGui::CalcTextSize("Solving...").x) * 0.5f;
+        float yPos = (ImGui::GetWindowSize().y - ImGui::CalcTextSize("Solving...").y) * 0.5f;
+        ImGui::SetCursorPosX(xPos);
+        ImGui::SetCursorPosY(yPos);
+
+        ImGui::SetWindowFontScale(2.0f);
+        ImGui::Text("Solving...", 20);
+
+        ImGui::End();
+        ImGui::PopStyleColor();
     }
 }

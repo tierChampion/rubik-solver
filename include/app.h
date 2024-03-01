@@ -14,6 +14,9 @@ class GameWindow;
 class Application
 {
     GameWindow *_window;
+    int _width;
+    int _height;
+    float _aspectRatio;
     std::string _projPath;
 
     rubik::CubeType _type;
@@ -54,5 +57,5 @@ private:
     void setCubeType(rubik::CubeType type);
     void applyCubeType();
 
-    void renderImGuiMenuBar();
+    void renderImGui();
 };
