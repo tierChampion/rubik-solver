@@ -327,21 +327,17 @@ void Application::renderImGui()
     {
         if (ImGui::BeginMenu("Mode"))
         {
-            if (ImGui::MenuItem("change"))
+            if (ImGui::MenuItem("Normal"))
             {
-                switch (_type)
-                {
-                case rubik::CubeType::REGULAR:
-                    setCubeType(rubik::CubeType::MIRROR);
-                    break;
-                default:
-                    setCubeType(rubik::CubeType::REGULAR);
-                    break;
-                }
+                setCubeType(rubik::CubeType::REGULAR);
                 applyCubeType();
             }
-
-            if (ImGui::MenuItem("split"))
+            if (ImGui::MenuItem("Mirror"))
+            {
+                setCubeType(rubik::CubeType::MIRROR);
+                applyCubeType();
+            }
+            if (ImGui::MenuItem("Split"))
             {
                 _cubeBrowserOpen = true;
                 _cubeBrowser.Open();
