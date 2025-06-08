@@ -186,7 +186,8 @@ int Application::launch()
 bool Application::initGL()
 {
     glewExperimental = GL_TRUE;
-    /* Initialize GLEW */
+    /* Initialize GLEW. Not needed on wayland */
+#ifndef USE_WAYLAND
     GLenum err = glewInit();
     glGetError();
     if (err != GLEW_OK)
@@ -195,6 +196,7 @@ bool Application::initGL()
         exit(1);
     }
 
+#endif
     SDK_CHECK_ERROR_GL();
 
     return true;

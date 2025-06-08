@@ -39,6 +39,14 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
 	include_directories(${GLEW_INCLUDE_DIRS})
 	include_directories(${OPENGL_INCLUDE_DIRS})
 
+	# Wayland support
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(WAYLAND wayland-client)
+	if (WAYLAND_FOUND) 
+		message(STATUS "Wayland client found")
+		add_compile_definitions(USE_WAYLAND)
+	endif()
+
 endif()
 
 # Executable definition
